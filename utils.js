@@ -25,25 +25,21 @@ var cam = {
 
 //mouse shenanigan
 var mouse = {
-    pressed: false,
     x: 0,
     y: 0,
-    justPressed: false,
-    justReleased: false,
-    button: 0
+    buttons: {}
 };
 function handleMousePress(e) {
-    mouse.pressed = true;
-    mouse.justPressed = true;
-    mouse.button = e.button;
+    mouse.buttons[e.button] = [true, true];//pressed, justPressed
 }
 function handleMouseMove(e) {
     mouse.x = (e.clientX - canvas.offsetLeft) * canvas.width/canvas.offsetWidth;
     mouse.y = (e.clientY - canvas.offsetTop) * canvas.height/canvas.offsetHeight;
 }
 function handleMouseRelease(e) {
-    mouse.pressed = false;
-    mouse.justReleased = true;
+    if(mouse.buttons[e.button]) {
+        mouse.buttons[e.button] = [false, false];//pressed, justReleased
+    }
 }
 canvas.addEventListener("mousedown", handleMousePress   );
 canvas.addEventListener("mousemove", handleMouseMove    );
@@ -280,16 +276,21 @@ document.body.addEventListener("keyup", keys.handleKeyUp);
 
 
 function getInput(inputName, isJustPressed) {
-    if(isJustPressed) {
-        return inputName === "mouseLeft"? mouse.justPressed&&mouse.button===0:
-            inputName === "mouseRight"? mouse.justPressed&&mouse.button===2:
-            inputName === "space"? !!justPressed[" "]:
-            !!justPressed[inputName];
+    try {
+        if(isJustPressed) {
+            return inputName === "mouseLeft"? mouse.buttons[0][1]:
+                inputName === "mouseRight"? mouse.buttons[2][1]:
+                inputName === "space"? !!justPressed[" "]:
+                !!justPressed[inputName];
+        }
+        else {
+            return inputName === "mouseLeft"? mouse.buttons[0][0]:
+                inputName === "mouseRight"? mouse.buttons[2][0]:
+                inputName === "space"? !!keys[" "]:
+                !!keys[inputName];
+        }
     }
-    else {
-        return inputName === "mouseLeft"? mouse.pressed&&mouse.button===0:
-            inputName === "mouseRight"? mouse.pressed&&mouse.button===2:
-            inputName === "space"? !!keys[" "]:
-            !!keys[inputName];
+    catch(err) {
+        return false;
     }
 }

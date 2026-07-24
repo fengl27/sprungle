@@ -21,7 +21,9 @@ function frame() {
     cam.scale += (cam.targetScale - cam.scale) / 10;
 
     justPressed = [];
-    mouse.justPressed = false;
+    for(var i in mouse.buttons) {
+        mouse.buttons[i][1] = false;
+    }
     window.requestAnimationFrame(frame);
 }
 window.requestAnimationFrame(frame);

@@ -30,7 +30,8 @@ class Player {
             down: "s",
             grapple: "mouseLeft",
             sprint: "shift",//god => sprint, normal => floor sliding
-            bounce: " ",//wall bounces and grappulls
+            bounce: " ",//wall bounces
+            grapplePull: "mouseRight",//grapple pull
             toggleBuilder: "o",
             clearLevel: "c",//god only
         };
@@ -479,17 +480,18 @@ class Player {
         }
         if(getInput(this.controls.bounce, true)) {
             //bounce / stop grappling
-            if(this.grapple.grappling) {
-                this.grapple.grappling = false;
-                this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), this.vel.mag()));
-            }
-            else if(this.lastCollisionTimer < settings.bounceTime) {
+            if(this.lastCollisionTimer < settings.bounceTime) {
                 this.vel.set(this.bounceVel);//bounce straight away
                 this.walking = false;
             }
             else if(!this.walking) {
                 this.bounceTimer = 0;//bounce buffer
             }
+        }
+        if(getInput(this.controls.grapplePull,true) && this.grapple.grappling) {
+            console.log("grappulled");
+            this.grapple.grappling = false;
+            this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), this.vel.mag()));
         }
         
         //accelerate
