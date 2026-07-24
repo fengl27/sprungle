@@ -16,7 +16,9 @@ class Player {
             grappleBufferTime: 999,
 
             grappleDispRot: 0,
-            grappleDispRotVel: 0
+            grappleDispRotVel: 0,
+
+            castAnim: 0
         };
         this.squish = new Vect();
         this.squishVel = new Vect();
@@ -114,13 +116,36 @@ class Player {
 
         if(this.grapple.grappling) {
             let p = cam.toScreen(this.center);
-            if(sqrDist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) >= this.grapple.grappleLength * this.grapple.grappleLength) {
+            let animationLength = Math.min(10, this.grapple.grappleLength / 15);
+            if(this.grapple.castAnim < animationLength) {
+                console.log(this.grapple.castAnim);
+                //do the anim thing
+                let currDist = easings.easeOutSine(Math.min(1, this.grapple.castAnim / animationLength));//current amount along the line we are
+                let waveAmp = 50 * (1 - easings.easeOutBack(Math.min(1, this.grapple.castAnim / animationLength)));
+                let diff = Vect.sub(this.grapple.pos, this.center);
+                let waveVect = new Vect(-diff.y, diff.x);
+                waveVect.mult(waveAmp / waveVect.mag());
+                for(var i = 0; i < 1; i += 0.2) {
+                    let p1 = Vect.lerp(this.center, this.grapple.pos, i*currDist);
+                    let p2 = Vect.lerp(this.center, this.grapple.pos, (i+0.1)*currDist);
+                    let p3 = Vect.lerp(this.center, this.grapple.pos, (i+0.2)*currDist);
+                    p2.add(Vect.mult(waveVect, 1-i));
+                    waveVect.mult(-1);
+                    let sp1 = cam.toScreen(p1),
+                        sp2 = cam.toScreen(p2),
+                        sp3 = cam.toScreen(p3);
+                    quadBezier(ctx, sp1.x, sp1.y, sp2.x, sp2.y, sp3.x, sp3.y);
+                }
+            }
+            else if(sqrDist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) >= this.grapple.grappleLength * this.grapple.grappleLength) {
                 ctx.beginPath();
                 ctx.moveTo(p.x, p.y);
                 p = cam.toScreen(this.grapple.pos);
                 ctx.lineTo(p.x, p.y);
                 ctx.stroke();
-            }else{
+            }
+            else{
+                //bezier curving time
                 let dir = Vect.sub(this.grapple.pos, this.center);
                 dir.normalize();
                 
@@ -485,6 +510,8 @@ class Player {
                 this.grapple.pos = stuff[0];
                 this.grapple.grappleLength = stuff[1];
                 this.grapple.grappling = true;
+                this.grapple.castAnim = 0;
+                this.grapple.grappleBufferTime = 999;
             }
         }
         if(!getInput(this.controls.grapple) && this.grapple.grappling) {
@@ -529,7 +556,6 @@ class Player {
         if(this.grapple.grappling) {
             this.walking = false;
             if(sqrDist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) > this.grapple.grappleLength * this.grapple.grappleLength) {
-                console.log("aah");
                 var normal = Vect.normalize(
                     Vect.sub(
                         this.center,
@@ -558,6 +584,7 @@ class Player {
         this.vel.add(settings.gravity);
 
         //timers
+        this.grapple.castAnim ++;
         this.lastCollisionTimer ++;
         this.collisionTimer ++;
         this.bounceTimer ++;

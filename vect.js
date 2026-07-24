@@ -100,6 +100,12 @@ class Vect {
             this.y = y;
         }
     }
+    rotate(angle) {
+        let newX = Math.cos(angle) * this.x - Math.sin(angle) * this.y,
+            newY = Math.sin(angle) * this.x + Math.cos(angle) * this.y;
+        this.x = newX;
+        this.y = newY;
+    }
 
     toString() {
         return "[" + this.x + ", " + this.y + "]";
