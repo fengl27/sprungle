@@ -517,6 +517,7 @@ class Player {
         if(!getInput(this.controls.grapple) && this.grapple.grappling) {
             //ungrapple
             this.grapple.grappling = false;
+            particles.push(new Rope (this.grapple.pos.x,this.grapple.pos.y, this.center.x, this.center.y, this.grapple.grappleLength, settings.ropeParticleTimer));
             this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), 2));
         }
         if(getInput(this.controls.bounce, true)) {

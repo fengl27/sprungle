@@ -25,6 +25,7 @@ const settings = {
     jumpBufferTime: 4,
     bounceTime: 4,
     bouncePower: 1.1,
+    ropeParticleTimer: 60,
 
     platformSnap: 10,//grid snap (for god mode)
     godSpeed: 8,

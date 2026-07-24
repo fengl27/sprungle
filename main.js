@@ -2,6 +2,13 @@ function frame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     player.update();
     player.display();
+    for(var i = particles.length-1; i >= 0; i --) {
+        particles[i].update();
+        particles[i].display();
+        if(!particles[i].alive) {
+            particles.splice(i, 1);
+        }
+    }
     if(!player.god.active) {
         for(var i = 0; i < platforms.length; i ++) {
             platforms[i].border();
