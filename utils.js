@@ -181,6 +181,12 @@ function drawGrayedImage(img, sx, sy, sw, sh, x, y, w, h) {
 }
 
 //display functions
+var quadBezier = function(ctx, x1, y1, x2, y2, x3, y3) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(x2, y2, x3, y3);
+    ctx.stroke();
+}
 var rect = function(ctx, x, y, w, h, fill, stroke) {
     /*
     ctx.beginPath();

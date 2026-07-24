@@ -113,12 +113,26 @@ class Player {
         //draw grapple line
 
         if(this.grapple.grappling) {
-            ctx.beginPath();
             let p = cam.toScreen(this.center);
-            ctx.moveTo(p.x, p.y);
-            p = cam.toScreen(this.grapple.pos);
-            ctx.lineTo(p.x, p.y);
-            ctx.stroke();
+            if(sqrDist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) >= this.grapple.grappleLength * this.grapple.grappleLength) {
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                p = cam.toScreen(this.grapple.pos);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+            }else{
+                let dir = Vect.sub(this.grapple.pos, this.center);
+                dir.normalize();
+                
+                let rotDir = -limit(this.vel.x/3, -1, 1) * limit(this.vel.y/3, -1, 1);
+                let tangent = new Vect(-dir.y, dir.x);
+                tangent.mult(rotDir);
+                let mid = Vect.mult(Vect.add(this.grapple.pos, this.center), 0.5);
+                tangent.mult(Math.sqrt(this.grapple.grappleLength * this.grapple.grappleLength - Vect.sqrDist(this.center, this.grapple.pos)) / 2);
+                let p2 = cam.toScreen(Vect.add(mid, tangent));
+                let p3 = cam.toScreen(this.grapple.pos);
+                quadBezier(ctx, p.x, p.y, p2.x, p2.y, p3.x, p3.y);
+            }
         }
         else {
             let bob = this.raycastGrapple();
