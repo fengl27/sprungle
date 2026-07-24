@@ -513,13 +513,15 @@ class Player {
         if(this.grapple.grappling) {
             this.walking = false;
             if(sqrDist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) > this.grapple.grappleLength * this.grapple.grappleLength) {
+                console.log("aah");
                 var normal = Vect.normalize(
                     Vect.sub(
                         this.center,
                         this.grapple.pos
                     )
                 );
-                this.vel.sub(Vect.mult(normal, Vect.dot(this.vel, normal)));
+                var dp = Vect.dot(this.vel, normal);
+                if(dp > 0) this.vel.sub(Vect.mult(normal, dp));
                 this.moveTo(
                     Vect.sub(
                         Vect.add(
