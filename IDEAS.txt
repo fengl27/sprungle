@@ -1,0 +1,3 @@
+shift to parry off walls- bounce off walls if timed correctly??
+hold shift to slide instead of auto slide
+space to pull towards grapple point and stop graping
