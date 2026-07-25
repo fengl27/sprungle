@@ -244,7 +244,6 @@ var easings = {
 var keys = {};
 var justPressed = {};
 keys.handleKeyDown = function(e) {
-    //console.log("pressed " + e.key.toLowerCase());
     var k = e.key.toLowerCase();
 
     if(!keys[k]) {
@@ -266,7 +265,7 @@ keys.handleKeyUp = function(e) {
         for(var i = 0; i < platforms.length; i ++) {
             let p = platforms[i].pos;
             let s = platforms[i].size;
-            log += `\tnew Platform(new Vect(${p.x}, ${p.y}), new Vect(${s.x}, ${s.y}), "${platforms[i].type}"),\n`;
+            log += `\tnew Platform(new Vect(${p.x}, ${p.y}), new Vect(${s.x}, ${s.y})),\n`;
         }
         log += "];";
         console.log(log);

@@ -68,5 +68,6 @@ class Rope {
         this.timeToLive --;
         if(this.timeToLive <= 0) this.alive = false;
         this.p2.add(this.vel);
+        
     }
 }

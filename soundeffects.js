@@ -670,19 +670,16 @@ for(let i in music) {
                 this.audio.play();
                 this.aGain.gain.setValueAtTime(0, audioCtx.currentTime);
                 this.aGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 1);
-                //console.log("playing music");
             }
         },
         pause: function() {
             window.setTimeout((audio) => {audio.pause();}, 2000, this.audio);
             this.aGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
-            //console.log("plausing music");
         },
         unpause: function() {
             this.audio.currentTime --;
             this.audio.play();//don't reset
             this.aGain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 1);
-            //console.log("unpausinging music");
         },
         switchMuffled: function() {
             if(this.isMuffled) {
@@ -690,14 +687,12 @@ for(let i in music) {
                 this.muffled.pause();
                 this.aGain.gain.setValueAtTime(1, audioCtx.currentTime);
                 this.audio.play();
-                //console.log("antimuffling music");
             } 
             else {
                 this.muffled.currentTime = this.audio.currentTime;
                 this.audio.pause();
                 this.mGain.gain.setValueAtTime(1, audioCtx.currentTime);
                 this.muffled.play();
-                //console.log("antiunmuffling music");
             }
             this.isMuffled = !this.isMuffled;
         }
