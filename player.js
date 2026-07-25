@@ -554,7 +554,7 @@ class Player {
             pullForce.mult(this.vel.mag() / pullForce.mag());
             this.vel.mult(0.3);
             this.vel.add(pullForce);
-        }
+        }   
         
         //accelerate
         var airSpeed = lerp(limit(this.vel.mag(), 0, 1), 0.5, 1) * settings.playerAirSpeed;
@@ -574,7 +574,7 @@ class Player {
             this.vel.x *= 0.9;
         }
 
-        if(this.grapple.grappling) {
+        if(this.grapple.grappling && !getInput(this.controls.down, false)) {
             this.walking = false;
             if(sqrDist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) > this.grapple.grappleLength * this.grapple.grappleLength) {
                 var normal = Vect.normalize(
@@ -603,6 +603,12 @@ class Player {
                     )
                 );
             }
+        }
+        if(getInput(this.controls.down, false)&& this.grapple.grappling) {
+            this.grapple.grappleLength = dist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y);
+        }
+        if(getInput(this.controls.up, false)&& this.grapple.grappling) {
+            this.grapple.grappleLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - this.vel.mag()/2-1);
         }
 
         this.vel.add(settings.gravity);
