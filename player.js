@@ -222,6 +222,8 @@ class Player {
             if(!this.walking) {
                 this.squish.y = Math.abs(this.vel.x / 3) * lerp(0.8, 1.2, Math.sin(Date.now() / 100));//yea idc at this pint
                 this.stretching[1] = false;
+                //make particles
+                particles.push(new Dust(this.pos.x, this.pos.y, -this.vel.x));
             }
             var targets = [0, Math.PI / 2, -Math.PI / 2];
             //var targets = [Math.PI * 2, 0, Math.PI * -2];
@@ -532,7 +534,7 @@ class Player {
                 this.grapple.grappleBufferTime = 999;
             }
         }
-        if(!getInput(this.controls.grapple) && this.grapple.grappling && this.grapple.slackTimer < 5) {
+        if(!getInput(this.controls.grapple) && this.grapple.grappling) {
             //ungrapple
             this.grapple.grappling = false;
             particles.push(new Rope (this.grapple.pos.x,this.grapple.pos.y, this.center.x, this.center.y, this.grapple.grappleLength, settings.ropeParticleTimer));
@@ -551,7 +553,8 @@ class Player {
                 this.bounceTimer = 0;//bounce buffer
             }
         }
-        if(getInput(this.controls.grapplePull,true) && this.grapple.grappling) {
+        if(getInput(this.controls.grapplePull,true) && this.grapple.grappling && this.grapple.slackTimer < 5) {
+            //pull
             this.grapple.grappling = false;
             let pullForce = Vect.sub(this.grapple.pos, this.center);
             pullForce.mult(this.vel.mag() / pullForce.mag());
