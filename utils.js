@@ -244,7 +244,6 @@ var easings = {
 var keys = {};
 var justPressed = {};
 keys.handleKeyDown = function(e) {
-    //console.log("pressed " + e.key.toLowerCase());
     var k = e.key.toLowerCase();
 
     if(!keys[k]) {

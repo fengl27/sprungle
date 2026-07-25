@@ -24,7 +24,7 @@ const settings = {
     coyoteTime: 8,
     jumpBufferTime: 4,
     bounceTime: 4,
-    bouncePower: 1.1,
+    bouncePower: 1,//how much your velocity gets multiplied by after a bounce
     ropeParticleTimer: 60,
 
     platformSnap: 10,//grid snap (for god mode)

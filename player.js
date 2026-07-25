@@ -5,7 +5,8 @@ class Player {
         this.god = {
             platformStart: new Vect(),
             building: false,
-            active: godMode || false
+            active: godMode || false,
+            placeType: "normal"
         };
         this.vel = new Vect();
         this.grapple = {
@@ -18,7 +19,9 @@ class Player {
             grappleDispRot: 0,
             grappleDispRotVel: 0,
 
-            castAnim: 0
+            castAnim: 0,
+
+            slackTimer: 0//time since last time the rope actually pulled the player
         };
         this.squish = new Vect();
         this.squishVel = new Vect();
@@ -36,6 +39,7 @@ class Player {
             grapplePull: "mouseRight",//grapple pull
             toggleBuilder: "o",
             clearLevel: "c",//god only
+            switchBuildType: "e",//god only (switch platform building type)
         };
         this.groundTimer = 0;//time since touched floor
         this.collisionTimer = 0;
@@ -374,12 +378,13 @@ class Player {
             this.stretching[0] = false;
             this.squishVel.x += this.vel.x / 2;
             this.pos.x = Math.sign(moveAmt.x) === 1? plat.pos.x - this.size.x: plat.pos.x + plat.size.x;
-            if(this.bounceTimer < settings.bounceTime) {
+            if(this.bounceTimer < settings.bounceTime*2) {
                 this.vel.x *= -settings.bouncePower;
                 this.bounceTimer = 999;
             }
             else {
                 this.vel.x = 0;
+                plat.properties.onTouch? plat.properties.onTouch(): false;
             }
             this.collisionTimer = 0;
         }
@@ -399,7 +404,7 @@ class Player {
             if(moveAmt.y > 0 && !getInput(this.controls.sprint)) {
                 this.walking = true;
             }
-            if(this.bounceTimer < settings.bounceTime) {
+            if(this.bounceTimer < settings.bounceTime*2) {
                 this.vel.y *= -settings.bouncePower;
                 this.bounceTimer = 999;
                 this.walking = false;//hehe
@@ -407,6 +412,7 @@ class Player {
             else {
                 //don't bounce
                 this.vel.y = 0;
+                plat.properties.onTouch? plat.properties.onTouch(): false;
             }
             this.groundTimer = 0;
             this.collisionTimer = 0;
@@ -416,10 +422,12 @@ class Player {
     reset() {
         this.pos.mult(0);
         this.vel.mult(0);
-        this.groundTimer = 0;
+        this.groundTimer = 999;
         this.collisionTimer = 0;
         this.lastCollisionTimer = 0;
         this.jumpBufferTimer = 999;
+        this.bounceTimer = 999;
+        this.lastCollisionTimer = 999;
 
         this.bounceTimer = 999;
         this.grapple.grappling = false;
@@ -427,6 +435,10 @@ class Player {
         this.squish.mult(0);
         this.squishVel.mult(0);
         this.stretching = [false, false];
+    }
+
+    die() {
+        this.reset();//only this for now (we can add animation later right?)
     }
 
     update() {
@@ -443,6 +455,11 @@ class Player {
             this.pos.x += (getInput(this.controls.right) - getInput(this.controls.left)) * speed;
             this.pos.y += (getInput(this.controls.down) - getInput(this.controls.up)) * speed;
             cam.targetScale = getInput(this.controls.sprint)? h100 / 15: h100 / 6;
+
+            if(getInput(this.controls.switchBuildType, true)) {
+                //cycle place type
+                this.god.placeType = Platform.types[(Platform.types.indexOf(this.god.placeType)+1)%Platform.types.length];
+            }
 
             if(getInput(this.controls.grapple, true)) {
                 //start build
@@ -481,7 +498,7 @@ class Player {
                     Math.max(this.god.platformStart.y, p.y)+settings.platformSnap,
                 );
                 if(tl.x !== br.x && tl.y !== br.y) {//no lines allowed (they shouldn't be possible i think)
-                    platforms.push(new Platform(tl, Vect.sub(br, tl)));
+                    platforms.push(new Platform(tl, Vect.sub(br, tl), this.god.placeType));
                 }
             }
 
@@ -512,14 +529,17 @@ class Player {
                 this.grapple.grappleBufferTime = 999;
             }
         }
-        if(!getInput(this.controls.grapple) && this.grapple.grappling) {
+        if(!getInput(this.controls.grapple) && this.grapple.grappling && this.grapple.slackTimer < 5) {
             //ungrapple
             this.grapple.grappling = false;
             particles.push(new Rope (this.grapple.pos.x,this.grapple.pos.y, this.center.x, this.center.y, this.grapple.grappleLength, settings.ropeParticleTimer));
-            this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), 2));
+            if(this.grapple.slackTimer < 5) {
+                //if the rope isn't slack, give a slight pulling force
+                this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), 2));
+            }
         }
         if(getInput(this.controls.bounce, true)) {
-            //bounce / stop grappling
+            //bounce
             if(this.lastCollisionTimer < settings.bounceTime) {
                 this.vel.set(this.bounceVel);//bounce straight away
                 this.walking = false;
@@ -530,7 +550,10 @@ class Player {
         }
         if(getInput(this.controls.grapplePull,true) && this.grapple.grappling) {
             this.grapple.grappling = false;
-            this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), this.vel.mag()));
+            let pullForce = Vect.sub(this.grapple.pos, this.center);
+            pullForce.mult(this.vel.mag() / pullForce.mag());
+            this.vel.mult(0.3);
+            this.vel.add(pullForce);
         }
         
         //accelerate
@@ -561,7 +584,10 @@ class Player {
                     )
                 );
                 var dp = Vect.dot(this.vel, normal);
-                if(dp > 0) this.vel.sub(Vect.mult(normal, dp));
+                if(dp > 0) {
+                    this.vel.sub(Vect.mult(normal, dp));
+                    this.grapple.slackTimer = 0;
+                };
                 this.moveTo(
                     Vect.sub(
                         Vect.add(
@@ -582,12 +608,13 @@ class Player {
         this.vel.add(settings.gravity);
 
         //timers
+        this.grapple.slackTimer ++;
+        this.grapple.grappleBufferTime ++;
         this.grapple.castAnim ++;
         this.lastCollisionTimer ++;
         this.collisionTimer ++;
         this.bounceTimer ++;
         this.groundTimer ++;
-        this.grapple.grappleBufferTime ++;
         this.jumpBufferTimer ++;
         if(getInput(this.controls.up, true)) {
             this.jumpBufferTimer = 0;
