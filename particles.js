@@ -66,8 +66,35 @@ class Rope {
         }
 
         this.timeToLive --;
-        if(this.timeToLive <= 0) this.alive = false;
+        this.alive = this.timeToLive > 0;
         this.p2.add(this.vel);
         
+    }
+}
+
+class Dust {
+    constructor(x, y, vx, vym) {
+        vym = vym || 1;
+        this.pos = new Vect(x, y);
+        this.vel = new Vect(vx * lerp(0.2, 0.5, Math.random() * Math.random()), lerp(-1, -5, Math.random()) * vym);
+        var s = lerp(5, 10, Math.random());
+        this.size = new Vect(s, s);
+        this.alive = true;
+        this.timeToLive = lerp(7, 13, Math.random());
+    }
+
+    update() {
+        this.pos.add(this.vel);
+        this.vel.mult(0.95);
+        this.vel.add(Vect.mult(settings.gravity, 0.8));
+        this.timeToLive --;
+        this.alive = this.timeToLive > 0;
+    }
+
+    display() {
+        ctx.fillStyle = "rgba(100, 48, 48, 0.5)";
+        ctx.lineWidth = 1;
+        cam.drawRect(Vect.sub(this.pos, Vect.div(this.size, 2)), this.size);
+        ctx.lineWidth = 3;
     }
 }

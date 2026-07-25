@@ -48,6 +48,7 @@ class Player {
 
         this.bounceTimer = 999;//how long since you pressed bounce
         this.bounceVel = new Vect();
+        this.bounceVelDir = new Vect();//dir bouncevel is bouncing in
 
         this.walking = true;//ground fric or no ground fronk
 
@@ -222,8 +223,10 @@ class Player {
             if(!this.walking) {
                 this.squish.y = Math.abs(this.vel.x / 3) * lerp(0.8, 1.2, Math.sin(Date.now() / 100));//yea idc at this pint
                 this.stretching[1] = false;
-                //make particles
-                particles.push(new Dust(this.pos.x, this.pos.y, -this.vel.x));
+                if(this.groundTimer < settings.coyoteTime) {
+                    //make particles
+                    particles.push(new Dust(this.pos.x + this.size.x * (this.vel.x < 0), this.pos.y + this.size.y, -this.vel.x));
+                }
             }
             var targets = [0, Math.PI / 2, -Math.PI / 2];
             //var targets = [Math.PI * 2, 0, Math.PI * -2];
@@ -377,14 +380,15 @@ class Player {
             if(this.collisionTimer > settings.coyoteTime) {
                 this.bounceVel.set(this.vel);
                 this.bounceVel.x *= -settings.bouncePower;
+                this.bounceVelDir = new Vect(Math.sign(this.vel.x), 0);
                 this.lastCollisionTimer = 0;
             }
             this.stretching[0] = false;
             this.squishVel.x += this.vel.x / 2;
             this.pos.x = Math.sign(moveAmt.x) === 1? plat.pos.x - this.size.x: plat.pos.x + plat.size.x;
             if(this.bounceTimer < settings.bounceTime*2) {
-                this.vel.x *= -settings.bouncePower;
-                this.bounceTimer = 999;
+                //BOUNCEEE
+                this.bounce(this.bounceVel);
             }
             else {
                 this.vel.x = 0;
@@ -402,23 +406,25 @@ class Player {
 
                 this.bounceVel.set(this.vel);
                 this.bounceVel.y *= -settings.bouncePower;
+                this.bounceVelDir = new Vect(0, Math.sign(this.vel.y));
                 this.lastCollisionTimer = 0;
             }
             this.pos.y = Math.sign(moveAmt.y) === 1? plat.pos.y - this.size.y: plat.pos.y + plat.size.y;
             if(moveAmt.y > 0 && !getInput(this.controls.sprint)) {
                 this.walking = true;
             }
+            if(this.vel.y > 0) {
+                this.groundTimer = 0;
+            }
             if(this.bounceTimer < settings.bounceTime*2) {
-                this.vel.y *= -settings.bouncePower;
-                this.bounceTimer = 999;
-                this.walking = false;//hehe
+                //BOUNCEEEE
+                this.bounce(this.bounceVel);
             }
             else {
                 //don't bounce
                 this.vel.y = 0;
                 plat.properties.onTouch? plat.properties.onTouch(): false;
             }
-            this.groundTimer = 0;
             this.collisionTimer = 0;
         }
     }
@@ -444,6 +450,22 @@ class Player {
 
     die() {
         this.dead = true;//only this for now (we can add animation later right?)
+    }
+
+    bounce(v) {
+        this.vel.set(v);//bounce straight away
+        this.walking = false;
+        this.groundTimer = 999;
+        for(var i = 0; i < 15; i ++) {
+            if(this.bounceVelDir.x) {
+                //it's an x bounce
+                particles.push(new Dust(this.pos.x + this.size.x * (this.bounceVelDir.x>0), this.pos.y + Math.random() * this.size.y, lerp(-15, 15, Math.random()), 0.3));
+                particles.at(-1).vel.rotate(-Math.PI / 2 * this.bounceVelDir.x);
+            }
+            else {
+                particles.push(new Dust(this.pos.x + Math.random() * this.size.x, this.pos.y + this.size.y * (this.bounceVelDir.y>0), lerp(-15, 15, Math.random()), 0.3*this.bounceVelDir.y));
+            }
+        }
     }
 
     update() {
@@ -546,8 +568,7 @@ class Player {
         if(getInput(this.controls.bounce, true)) {
             //bounce
             if(this.lastCollisionTimer < settings.bounceTime) {
-                this.vel.set(this.bounceVel);//bounce straight away
-                this.walking = false;
+                this.bounce(this.bounceVel);
             }
             else if(!this.walking) {
                 this.bounceTimer = 0;//bounce buffer
@@ -578,6 +599,15 @@ class Player {
 
         if(this.walking) {
             this.vel.x *= 0.9;
+
+            
+        }
+        if(getInput(this.controls.down, false)) {
+            this.squishVel.y += getInput(this.controls.down, true)? 3: 0.5;
+            if(getInput(this.controls.down, true)) {
+                this.squish.y = 0;
+                this.stretching[1] = false;
+            }
         }
 
         if(this.grapple.grappling && !getInput(this.controls.down, false)) {

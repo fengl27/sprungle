@@ -243,6 +243,7 @@ var easings = {
 };
 var keys = {};
 var justPressed = {};
+var stupidPersonMode = false;
 keys.handleKeyDown = function(e) {
     var k = e.key.toLowerCase();
 
@@ -254,6 +255,14 @@ keys.handleKeyDown = function(e) {
             switchState("upgrade");
         }
         */
+    }
+    if(k === "x" && e.ctrlKey) {
+        e.preventDefault();
+        stupidPersonMode = !stupidPersonMode;
+        alert(stupidPersonMode? "ya' stupid": "unstupid");
+    }
+    if(k === "r" && e.ctrlKey && stupidPersonMode && !confirm("are you sure ya wanna reload") && stupidPersonMode) {
+        e.preventDefault();
     }
 };
 keys.handleKeyUp = function(e) {
