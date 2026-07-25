@@ -118,7 +118,6 @@ class Player {
             let p = cam.toScreen(this.center);
             let animationLength = Math.min(10, this.grapple.grappleLength / 15);
             if(this.grapple.castAnim < animationLength) {
-                console.log(this.grapple.castAnim);
                 //do the anim thing
                 let currDist = easings.easeOutSine(Math.min(1, this.grapple.castAnim / animationLength));//current amount along the line we are
                 let waveAmp = 50 * (1 - easings.easeOutBack(Math.min(1, this.grapple.castAnim / animationLength)));
@@ -205,7 +204,6 @@ class Player {
                 this.grapple.grappleDispRotVel = (this.grapple.grappleDispRot - oldDispRot) % (Math.PI * 2);
 
                 if(!this.faceRotThing) {
-                    console.log(Math.round(closestId / Math.PI*2));
                     this.faceRotThing = [Math.PI / 2, 0, -Math.PI / 2, Math.PI][Math.round(closestId / Math.PI*2)];
                 }
             }
@@ -531,7 +529,6 @@ class Player {
             }
         }
         if(getInput(this.controls.grapplePull,true) && this.grapple.grappling) {
-            console.log("grappulled");
             this.grapple.grappling = false;
             this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), this.vel.mag()));
         }
