@@ -56,6 +56,8 @@ class Player {
         this.smoothedVel = new Vect();//for camera movement
 
         this.faceRotThing = 0;//for displaying (don't worry about it)
+
+        this.dead = false;
     }
 
     get center() {
@@ -208,7 +210,6 @@ class Player {
                 this.grapple.grappleDispRotVel = (this.grapple.grappleDispRot - oldDispRot) % (Math.PI * 2);
 
                 if(!this.faceRotThing) {
-                    console.log(Math.round(closestId / Math.PI*2));
                     this.faceRotThing = [Math.PI / 2, 0, -Math.PI / 2, Math.PI][Math.round(closestId / Math.PI*2)];
                 }
             }
@@ -421,9 +422,10 @@ class Player {
     }
 
     reset() {
+        this.dead = false;
         this.pos.mult(0);
         this.vel.mult(0);
-        this.groundTimer = 999;
+        this.groundTimer = 0;
         this.collisionTimer = 0;
         this.lastCollisionTimer = 0;
         this.jumpBufferTimer = 999;
@@ -439,7 +441,7 @@ class Player {
     }
 
     die() {
-        this.reset();//only this for now (we can add animation later right?)
+        this.dead = true;//only this for now (we can add animation later right?)
     }
 
     update() {
@@ -642,6 +644,10 @@ class Player {
         //not squishing anymore check
         if(Math.abs(this.squishVel.x) < 0.05 && Math.abs(this.squish.x) < 0.05) {this.squish.x = 0; this.stretching[0] = false;}
         if(Math.abs(this.squishVel.y) < 0.05 && Math.abs(this.squish.y) < 0.05) {this.squish.y = 0; this.stretching[1] = false;}
+
+        if(this.dead) {
+            this.reset();
+        }
     }
 }
 
