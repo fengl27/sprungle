@@ -609,6 +609,12 @@ class Player {
                 this.stretching[1] = false;
             }
         }
+        if(getInput(this.controls.down, false)&& this.grapple.grappling) {
+            this.grapple.grappleLength = dist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y);
+        }
+        if(getInput(this.controls.up, false)&& this.grapple.grappling && this.walking === false) {
+            this.grapple.grappleLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - this.vel.mag()/4-2);
+        }
 
         if(this.grapple.grappling && !getInput(this.controls.down, false)) {
             this.walking = false;
@@ -639,12 +645,6 @@ class Player {
                     )
                 );
             }
-        }
-        if(getInput(this.controls.down, false)&& this.grapple.grappling) {
-            this.grapple.grappleLength = dist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y);
-        }
-        if(getInput(this.controls.up, false)&& this.grapple.grappling) {
-            this.grapple.grappleLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - this.vel.mag()/2-1);
         }
 
         this.vel.add(settings.gravity);
