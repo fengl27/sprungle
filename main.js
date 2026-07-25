@@ -22,6 +22,13 @@ function frame() {
             platforms[i].border();
             platforms[i].display();
         }
+
+        //god ui
+        ctx.fillStyle = "white";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.font = h100*5 + "px monospace";
+        ctx.fillText("Place mode: " + player.god.placeType, h100, canvas.height);
     }
 
     cam.pos.add(Vect.div(Vect.sub(Vect.add(player.center, Vect.mult(player.smoothedVel, 16)), cam.pos), 10));
