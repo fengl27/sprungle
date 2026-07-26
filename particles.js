@@ -20,7 +20,7 @@ class Rope {
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
     }
-    update() {
+    update(dt) {
         /*
         if(sqrDist(this.p1.x, this.p1.y, this.p2.x, this.p2.y) > this.length * this.length) {
             var normal = Vect.normalize(
@@ -57,7 +57,7 @@ class Rope {
         }
 
         
-        this.vel.add(settings.gravity);
+        this.vel.add(Vect.mult(settings.gravity, dt));
         this.vel.mult(0.995);
         if(sqrDist(this.p1.x, this.p1.y, this.p2.x, this.p2.y) > this.length * this.length* this.timeToLive / this.startingTime* this.timeToLive / this.startingTime) {
             diff.div(this.length);
@@ -65,7 +65,7 @@ class Rope {
             this.vel.sub(Vect.mult(diff, dp));
         }
 
-        this.timeToLive --;
+        this.timeToLive -= dt;
         this.alive = this.timeToLive > 0;
         this.p2.add(this.vel);
         
@@ -83,11 +83,11 @@ class Dust {
         this.timeToLive = lerp(7, 13, Math.random());
     }
 
-    update() {
-        this.pos.add(this.vel);
-        this.vel.mult(0.95);
-        this.vel.add(Vect.mult(settings.gravity, 0.8));
-        this.timeToLive --;
+    update(dt) {
+        this.pos.add(Vect.mult(this.vel, dt));
+        this.vel.mult(frictionDT(0.95, dt));
+        this.vel.add(Vect.mult(settings.gravity, 0.8 * dt));
+        this.timeToLive -= dt;
         this.alive = this.timeToLive > 0;
     }
 

@@ -124,6 +124,9 @@ var chooseWithWeighting = function(arr) {
         }
     }
 };
+var frictionDT = function (friction, dt) {//gives you the friction mult for any normal friction mult and dt
+    return Math.exp(Math.log(friction) * dt);
+}
 
 function drawImgWithHue(img, hue, rect, shouldReturn) {//rect is an array with x,y,w,h
     var bob = new OffscreenCanvas(rect[2], rect[3]);
@@ -270,14 +273,27 @@ keys.handleKeyUp = function(e) {
     keys[k] = false;
 
     if(k === "p") {
+        /*
         var log = "var platforms = [\n";
         for(var i = 0; i < platforms.length; i ++) {
             let p = platforms[i].pos;
             let s = platforms[i].size;
-            log += `\tnew Platform(new Vect(${p.x}, ${p.y}), new Vect(${s.x}, ${s.y})),\n`;
+            log += `\tnew Platform(new Vect(${p.x}, ${p.y}), new Vect(${s.x}, ${s.y}), "${platforms[i].type}"),\n`;
         }
         log += "];";
         console.log(log);
+        */
+        var log = "";
+        for(var i = 0; i < platforms.length; i ++) {
+            let p = platforms[i].pos;
+            let s = platforms[i].size;
+            log += `${p.x} ${p.y} ${s.x} ${s.y} ${platforms[i].type}`;
+            if(i !== platforms.length - 1) {
+                log += "\n";
+            }
+        }
+        console.log(log);
+
         let good = true;
         try {
             navigator.clipboard.writeText(log);
