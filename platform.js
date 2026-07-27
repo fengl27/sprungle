@@ -2,10 +2,31 @@ class Platform {
 
 	static platformThings = {
 		normal: {
-			col: "grey"
+			col: "grey",
+			canGrapple: true
+		},
+		noGrapple: {
+			col: "rgb(45, 45, 45)",
+			canGrapple: false
+		},
+		oneWay: {
+			col: "special",
+			canGrapple: (grappleDir) => {grappleDir > 0},//upwards things go through it
+			display: function(p) {
+				ctx.fillStyle = "grey";
+				ctx.fillRect(Math.round(p.x), Math.round(p.y), this.size.x * cam.scale + 0.7, 2 * cam.scale + 0.7);
+			},
+			outline: function(p) {
+				ctx.fillStyle = "black";
+				ctx.fillRect(Math.round(p.x - 3), Math.round(p.y - 3), this.size.x*cam.scale + 6, 2 *cam.scale + 6);
+			},
+			collision: function(platform, playerPrevPos, playerPostPos, isYMove) {
+				return isYMove && playerPostPos.y + player.size.y > platform.pos.y && playerPrevPos.y + player.size.y <= platform.pos.y + 2 && playerPostPos.y > playerPrevPos.y;
+			}
 		},
 		death: {
 			col: "rgb(150, 0, 0)",
+			canGrapple: true,
 			onTouch: function() {//you can still bounce off it without dying
 				player.die();
 			}
@@ -22,6 +43,7 @@ class Platform {
 		},
 		win: {
 			col: "special",
+			canGrapple: true,
 			display: function(p) {
 				ctx.fillStyle = "white";
 				for(var x = 0; x < Math.floor(this.size.x / 10); x ++) {
@@ -53,7 +75,12 @@ class Platform {
         ctx.fillStyle = "black";
         var p = cam.toScreen(this.pos);
         if(p.x < canvas.width && p.x + this.size.x * cam.scale > 0 && p.y < canvas.height && p.y + this.size.y * cam.scale > 0) {
-            ctx.fillRect(Math.round(p.x - 3), Math.round(p.y - 3), this.size.x*cam.scale + 6, this.size.y*cam.scale + 6);
+			if(this.properties.outline) {
+				this.properties.outline.call(this, p);
+			}
+			else {
+            	ctx.fillRect(Math.round(p.x - 3), Math.round(p.y - 3), this.size.x*cam.scale + 6, this.size.y*cam.scale + 6);
+			}
         }
     }
 
@@ -72,7 +99,7 @@ class Platform {
 }
 var platforms = [];
 
-var currLevel = 0;
+var currLevel = 1;
 function loadLevel(level) {
 	platforms = [];
 	fetch(`levels/level${level}.txt`)

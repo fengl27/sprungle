@@ -49,12 +49,12 @@ function frame() {
         ctx.font = h100*5 + "px monospace";
         ctx.fillText("Place mode: " + player.god.placeType, h100, canvas.height);
     }
-
+    /*
     ctx.fillStyle = "red";
     ctx.fillRect(0, 0, 25, canvas.height / 2 * performanceTracker.dt);
     ctx.fillStyle = "black";
     ctx.fillRect(0, canvas.height / 4 - 2, 100, 4);
-
+    */
     cam.pos.add(Vect.div(Vect.sub(Vect.add(player.center, Vect.mult(player.smoothedVel, 16)), cam.pos), 10 / performanceTracker.dt));
     cam.scale += (cam.targetScale - cam.scale) / 10;
 

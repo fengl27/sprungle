@@ -1,9 +1,9 @@
 var particles = [];
 class Rope {
-    constructor(x1, y1, x2, y2, length, timeToLive) {
+    constructor(x1, y1, x2, y2, length, timeToLive, pVel) {
         this.p1 = new Vect(x1, y1);
         this.p2 = new Vect(x2, y2);
-        this.vel = new Vect(0, 0);
+        this.vel = Vect.mult(pVel, 0.5);
         this.length = length;
         this.size = new Vect(15,15);
         this.startingTime = timeToLive;

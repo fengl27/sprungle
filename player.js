@@ -311,9 +311,12 @@ class Player {
         ctx.restore();
     }
 
-    checkPlatformCollisions() {
+    checkPlatformCollisions(targetPos, prevPos, isYMove) {
         for(var i = 0; i < platforms.length; i ++) {
-            if(AABBCollide(this.pos, this.size, platforms[i].pos, platforms[i].size)) {
+            if(
+                AABBCollide(this.pos, this.size, platforms[i].pos, platforms[i].size) &&
+                (!platforms[i].properties.collision || platforms[i].properties.collision(platforms[i], prevPos, targetPos, isYMove))
+            ) {
                 return platforms[i];
             }
         }
@@ -322,10 +325,12 @@ class Player {
 
     raycastGrapple () {
         //runs when you send out the gap honk
-        var dir = Vect.sub(cam.toGlobal(mouse), this.center);
-        dir.mult(4 / dir.mag());
+        var diff = Vect.sub(cam.toGlobal(mouse), this.center);
+        var dir = Vect.mult(diff, 4 / diff.mag());
         let lim = 250;
         let canGrapple = true;
+
+        var checkPlatform = (plat, anchorPos) => {return IsPointInAABB(anchorPos, plat.pos, plat.size) && (typeof plat.properties.canGrapple === "boolean" || plat.properties.canGrapple(diff))};
 
         var anchorPos = this.center;//don't vect.get because no need >:)
         var length = 0;
@@ -334,10 +339,10 @@ class Player {
             length ++;
             let die = false;
             for(var i = 0; i < platforms.length; i ++) {
-                if(IsPointInAABB(anchorPos, platforms[i].pos, platforms[i].size)) {
+                if(checkPlatform(platforms[i], anchorPos)) {
                     //die
                     die = true;
-                    if(platforms[i].properties.canGrapple === false) {
+                    if(platforms[i].properties.canGrapple === false || (typeof platforms[i].properties.canGrapple !== "boolean" && platforms[i].properties.canGrapple(diff))) {
                         canGrapple = false;
                         return [anchorPos, length * 4, canGrapple];
                     }
@@ -356,7 +361,7 @@ class Player {
             length -= 1/4;
             let die = false;
             for(var i = 0; i < platforms.length; i ++) {
-                if(!IsPointInAABB(anchorPos, platforms[i].pos, platforms[i].size)) {
+                if(/*!IsPointInAABB(anchorPos, platforms[i].pos, platforms[i].size)*/checkPlatform(platforms[i], anchorPos)) {
                     //die
                     die = true;
                     break;
@@ -379,16 +384,14 @@ class Player {
 
     moveTo(p, shouldChangeVel) {
         var moveAmt = Vect.sub(p, this.pos);
+        var prevPos = Vect.get(this.pos);
         this.pos.x = p.x;
-        let plat = this.checkPlatformCollisions();
+        let plat = this.checkPlatformCollisions(p, prevPos, false);
         if(plat) {
             //x collision
             if(this.collisionTimer > settings.coyoteTime) {
                 this.bounceVel.set(this.vel);
                 this.bounceVel.x *= -settings.bouncePower;
-                if(this.grapple.grappling) {
-                    this.bounceVel.y *= -settings.bouncePower;//or else sometimes you just lose all yer momentum when bounce
-                }
                 this.bounceVelDir = new Vect(Math.sign(this.vel.x), 0);
                 this.lastCollisionTimer = 0;
                 this.lastCollidedPlatform = plat;
@@ -407,8 +410,9 @@ class Player {
             this.collisionTimer = 0;
         }
         this.pos.y = p.y;
-        plat = this.checkPlatformCollisions();
+        plat = this.checkPlatformCollisions(p, prevPos, true);
         if(plat) {
+
             //y cliilition
             if(this.collisionTimer > settings.coyoteTime) {
                 this.stretching[1] = false;
@@ -416,9 +420,6 @@ class Player {
 
                 this.bounceVel.set(this.vel);
                 this.bounceVel.y *= -settings.bouncePower;
-                if(this.grapple.grappling) {
-                    this.bounceVel.x *= -settings.bouncePower;//or else sometimes you just lose all yer momentum when bounce
-                }
 
                 this.bounceVelDir = new Vect(0, Math.sign(this.vel.y));
                 this.lastCollisionTimer = 0;
@@ -469,12 +470,15 @@ class Player {
 
     win() {
         this.dead = true;//loool
+        currLevel ++;
+        loadLevel(currLevel);
     }
 
     bounce(v) {
         this.vel.set(v);//bounce straight away
         this.walking = false;
         this.bounceTimer = 999;
+        this.groundTimer = 999;//prevent jumping
         this.lastCollisionTimer = 999;
         for(var i = 0; i < 15; i ++) {
             if(this.bounceVelDir.x) {
@@ -491,6 +495,7 @@ class Player {
     }
 
     update(dt) {
+        var movement = new Vect();
         this.smoothedVel.add(Vect.mult(Vect.sub(this.vel, this.smoothedVel), 1-frictionDT(0.9, dt)));//for camera
 
         if(getInput(this.controls.toggleBuilder, true)) {
@@ -581,7 +586,7 @@ class Player {
         if(!getInput(this.controls.grapple) && this.grapple.grappling) {
             //ungrapple
             this.grapple.grappling = false;
-            particles.push(new Rope (this.grapple.pos.x,this.grapple.pos.y, this.center.x, this.center.y, this.grapple.grappleLength, settings.ropeParticleTimer));
+            particles.push(new Rope (this.grapple.pos.x,this.grapple.pos.y, this.center.x, this.center.y, this.grapple.grappleLength, settings.ropeParticleTimer, this.vel));
             if(this.grapple.slackTimer < 5) {
                 //if the rope isn't slack, give a slight pulling force
                 this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), 2));
@@ -592,7 +597,7 @@ class Player {
             if(this.lastCollisionTimer < settings.bounceTime) {
                 this.bounce(this.bounceVel);
             }
-            else if(!this.walking) {
+            else {
                 this.bounceTimer = 0;//bounce buffer
             }
         }
@@ -635,7 +640,29 @@ class Player {
             if(getInput(this.controls.up, false)) {
                 //pull ish
                 let pullSpeed = this.vel.mag()/4+2;
-                this.grapple.grappleLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - pullSpeed * dt);
+                let newLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - pullSpeed * dt);
+                //this.grapple.grappleLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - pullSpeed * dt);
+                if(sqrDist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) > newLength * newLength) {
+                    //we have to pull the player :)
+                    let diff = Vect.sub(this.center, this.grapple.pos);
+                    diff.normalize();
+                    diff.mult(newLength);
+                    let newPos = Vect.add(
+                        this.grapple.pos,
+                        Vect.sub(
+                            diff,
+                            Vect.div(
+                                this.size,
+                                2
+                            )
+                        )
+                    );
+                    this.moveTo(newPos);
+                    this.grapple.grappleLength = dist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) - 0.01;
+                }
+                else {
+                    this.grapple.grappleLength = newLength;
+                }
             }
 
             if(getInput(this.controls.down, false)) {
@@ -657,6 +684,7 @@ class Player {
                         this.vel.sub(Vect.mult(normal, dp));
                         this.grapple.slackTimer = 0;
                     };
+                    /*
                     this.moveTo(
                         Vect.sub(
                             Vect.add(
@@ -665,6 +693,24 @@ class Player {
                                     this.grapple.grappleLength
                                 ),
                                 this.grapple.pos
+                            ),
+                            Vect.div(
+                                this.size, 2
+                            )
+                        )
+                    );
+                    */
+                    movement.add(
+                        Vect.sub(
+                            Vect.sub(
+                                Vect.add(
+                                    Vect.mult(
+                                        normal,
+                                        this.grapple.grappleLength
+                                    ),
+                                    this.grapple.pos
+                                ),
+                                this.pos
                             ),
                             Vect.div(
                                 this.size, 2
@@ -694,8 +740,10 @@ class Player {
         var technicallyVel = Math.max(Math.abs(this.vel.x),Math.abs(this.vel.y));
         var moveTimes = Math.max(1, Math.ceil(technicallyVel/(settings.platformSnap+this.size.x)));
         //moveAndSlide()
+        movement.add(Vect.mult(this.vel, dt));
         for(var i = 0; i < moveTimes; i ++) {
-            this.moveTo(Vect.add(this.pos, Vect.mult(this.vel, dt/moveTimes)), true);
+            this.moveTo(Vect.add(this.pos, Vect.div(movement, moveTimes)), true);
+            //this.moveTo(Vect.add(this.pos, Vect.mult(this.vel, dt/moveTimes)), true);
         }
 
         let oldSquish = Vect.get(this.squish);
