@@ -23,6 +23,7 @@ const settings = {
     playerJump: 3,
     coyoteTime: 8,
     jumpBufferTime: 4,
+    grappleBufferTime: 10,
     bounceTime: 5,
     bouncePower: 1,//how much your velocity gets multiplied by after a bounce
     ropeParticleTimer: 60,

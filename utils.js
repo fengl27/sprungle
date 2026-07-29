@@ -259,19 +259,71 @@ keys.handleKeyDown = function(e) {
         }
         */
     }
-    if(k === "x" && e.ctrlKey) {
-        e.preventDefault();
-        stupidPersonMode = !stupidPersonMode;
-        alert(stupidPersonMode? "ya' stupid": "unstupid");
+    if(e.ctrlKey) {
+        if(k === "x") {
+            e.preventDefault();
+            stupidPersonMode = !stupidPersonMode;
+            window.alert(stupidPersonMode? "browser will prompt you if you try to reload (turn off with Ctrl. + x)": "reload prompting mode disabled");
+        }
+        if(k === "l") {
+            e.preventDefault();
+            var levelCode = window.prompt("Paste level code?");
+            if(levelCode) {
+                console.log(levelCode);
+                var nextFreeIdx = 3;
+                if(window.confirm("Save to specific level idx (y) or save to new level (n)?")) {
+                    var thingIdx = window.prompt("Level idx to save to:");
+                    if(thingIdx) {
+                        nextFreeIdx = thingIdx;
+                    }
+                    else {
+                        alert("Invalid level id - cancelled! :0");
+                        return;
+                    }
+                }
+                else {
+                    let lim = 300;
+                    while(--lim > 0) {
+                        if(!customLevels[nextFreeIdx]) {
+                            break;
+                        }
+                        nextFreeIdx ++;
+                    }
+                }
+                customLevels[nextFreeIdx] = levelCode;
+                window.localStorage.setItem("grapple-game-custom-levels", JSON.stringify(customLevels));
+                alert("Successfully loaded into level " + nextFreeIdx + "! Make sure to also back up your custom levels somewhere else because they will die if you shut down / restart your device.");
+            }
+            else {
+                alert("Cancelled!");
+            }
+        }
+        if(k === "k") {
+            e.preventDefault();
+            var levelIdx = window.prompt("Type level number to delete");
+            if(levelIdx) {
+                if(customLevels[levelIdx]) {
+                    if(window.confirm("Are you sure you want to delete level " + levelIdx + "?")) {
+                        delete customLevels[levelIdx];
+                        window.localStorage.setItem("grapple-game-custom-levels", JSON.stringify(customLevels));
+                        alert("Deleted level " + levelIdx);
+                    }
+                    else {
+                        alert("Cancelled! :D");
+                    }
+                }
+                else {
+                    alert("Couldn't find level (it either doesn't exist or is a default level.)");
+                }
+            }
+            else {
+                alert("Cancelled! :3");
+            }
+        }
+        if(k === "r" && stupidPersonMode && !confirm("are you sure ya wanna reload") && stupidPersonMode) {
+            e.preventDefault();
+        }
     }
-    if(k === "r" && e.ctrlKey && stupidPersonMode && !confirm("are you sure ya wanna reload") && stupidPersonMode) {
-        e.preventDefault();
-    }
-};
-keys.handleKeyUp = function(e) {
-    var k = e.key.toLowerCase();
-    keys[k] = false;
-
     if(k === "p") {
         /*
         var log = "var platforms = [\n";
@@ -287,9 +339,9 @@ keys.handleKeyUp = function(e) {
         for(var i = 0; i < platforms.length; i ++) {
             let p = platforms[i].pos;
             let s = platforms[i].size;
-            log += `${p.x} ${p.y} ${s.x} ${s.y} ${platforms[i].type}`;
+            log += `${(p.x).toString(36)}/${p.y.toString(36)}/${s.x.toString(36)}/${s.y.toString(36)}/${Platform.types.indexOf(platforms[i].type).toString(36)}`;
             if(i !== platforms.length - 1) {
-                log += "\n";
+                log += "|";
             }
         }
         console.log(log);
@@ -306,6 +358,10 @@ keys.handleKeyUp = function(e) {
             alert("Copied to clipboard!");
         }
     }
+};
+keys.handleKeyUp = function(e) {
+    var k = e.key.toLowerCase();
+    keys[k] = false;
 };
 document.body.addEventListener("keydown", keys.handleKeyDown);
 document.body.addEventListener("keyup", keys.handleKeyUp);

@@ -43,6 +43,7 @@ class Platform {
 		},
 		win: {
 			col: "special",
+			bounciness: -1,
 			canGrapple: true,
 			display: function(p) {
 				ctx.fillStyle = "white";
@@ -61,6 +62,11 @@ class Platform {
 			onTouch: function() {
 				player.win();
 			}
+		},
+		bouncy: {
+			col: "rgb(7, 145, 7)",
+			bounciness: -1.1,
+			canGrapple: true
 		}
 	}
 
@@ -100,22 +106,62 @@ class Platform {
 var platforms = [];
 
 var currLevel = 1;
+
+var customLevels = {
+
+};
+let stuff = window.localStorage.getItem("grapple-game-custom-levels");
+if(stuff) {
+	customLevels = JSON.parse(stuff);
+	delete stuff;
+}
+
+function parseCode(levelCode) {
+	let lines = levelCode.split(" ").join("").split("\n").join(" ").split("\r").join(" ").split("|");//platforms
+	let parsedPlatforms = [];
+	for(var i = 0; i < lines.length; i ++) {
+		let words = lines[i].split("/");
+		parsedPlatforms.push(new Platform(
+			new Vect(parseInt(words[0], 36), parseInt(words[1], 36)),
+			new Vect(parseInt(words[2], 36), parseInt(words[3], 36)),
+			Platform.types[parseInt(words[4], 36)]
+		));
+	}
+	return parsedPlatforms;
+}
+
+/*
+function parseCode(levelCode) {
+	let lines = levelCode.split("\r").join("").split("\n");//platforms
+	let parsedPlatforms = [];
+	for(var i = 0; i < lines.length; i ++) {
+		let words = lines[i].split(" ");
+		parsedPlatforms.push(new Platform(
+			new Vect(parseInt(words[0]), parseInt(words[1])),
+			new Vect(parseInt(words[2]), parseInt(words[3])),
+			words[4]
+		));
+	}
+	return parsedPlatforms;
+}
+*/
 function loadLevel(level) {
+	if(customLevels[level]) {
+		platforms = parseCode(customLevels[level]);
+		return;
+	}
 	platforms = [];
-	fetch(`levels/level${level}.txt`)
-		.then((res) => res.text())
-		.then((text) => {
-			let lines = text.split("\r").join("").split("\n");//delete the singular \r in each line
-			for(var i = 0; i < lines.length; i ++) {
-				let words = lines[i].split(" ");
-				platforms.push(new Platform(
-					new Vect(parseInt(words[0]), parseInt(words[1])),
-					new Vect(parseInt(words[2]), parseInt(words[3])),
-					words[4]
-				));
-			}
-		}
-	).catch((e) => console.error(e));
+	try {
+		fetch(`levels/level${level}.txt`)
+			.then((res) => res.text())
+			.then((text) => {
+				platforms = parseCode(text);
+			})
+	}
+	catch(e) {
+		console.error(e + "\n\nwow an error")
+	}
+	console.log("loaded level :)");
 }
 
 loadLevel(currLevel);

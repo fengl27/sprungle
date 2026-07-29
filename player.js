@@ -40,6 +40,8 @@ class Player {
             toggleBuilder: "o",
             clearLevel: "c",//god only
             switchBuildType: "e",//god only (switch platform building type)
+
+            zoomIn: "q",//god only (zoom in (duh))
         };
         this.groundTimer = 999;//time since touched floor
         this.collisionTimer = 999;
@@ -60,10 +62,32 @@ class Player {
         this.faceRotThing = 0;//for displaying (don't worry about it)
 
         this.dead = false;
+        this.won = false;
+
+        this.speedrunTimerStart = Date.now();
+        this._speedrunTimerStarted = false;
+        this.speedrunTimer = 0;
+        this.bestTimes = {};
     }
 
     get center() {
         return new Vect(this.pos.x + this.size.x / 2, this.pos.y + this.size.y / 2);
+    }
+
+    set speedrunTimerStarted(value) {
+        if(value === true) {
+            if(!this._speedrunTimerStarted) {
+                this.speedrunTimerStart = Date.now();
+                this._speedrunTimerStarted = true;
+            }
+        }
+        else if(this._speedrunTimerStarted) {
+            this.speedrunTimer = (Date.now() - this.speedrunTimerStart) / 1000;
+            this._speedrunTimerStarted = false;
+        }
+    }
+    get speedrunTimerStarted() {
+        return this._speedrunTimerStarted;
     }
 
     display() {
@@ -224,7 +248,7 @@ class Player {
             if(!this.walking) {
                 this.squish.y = Math.abs(this.vel.x / 3) * lerp(0.8, 1.2, Math.sin(Date.now() / 100));//yea idc at this pint
                 this.stretching[1] = false;
-                if(this.groundTimer < settings.coyoteTime && getInput(this.controls.sprint)) {
+                if(this.groundTimer < settings.coyoteTime && this.getInput(this.controls.sprint)) {
                     //make particles
                     particles.push(new Dust(this.pos.x + this.size.x * (this.vel.x < 0), this.pos.y + this.size.y, -this.vel.x));
                 }
@@ -404,7 +428,7 @@ class Player {
                 this.bounce(this.bounceVel);
             }
             else {
-                if(shouldChangeVel) this.vel.x=0;
+                if(shouldChangeVel) this.vel.x*=plat.properties.bounciness||0;
                 plat.properties.onTouch? plat.properties.onTouch(): false;
             }
             this.collisionTimer = 0;
@@ -426,7 +450,7 @@ class Player {
                 this.lastCollidedPlatform = plat;
             }
             this.pos.y = Math.sign(moveAmt.y) === 1? plat.pos.y - this.size.y: plat.pos.y + plat.size.y;
-            if(moveAmt.y > 0 && !getInput(this.controls.sprint)) {
+            if(moveAmt.y > 0 && !this.getInput(this.controls.sprint)) {
                 this.walking = true;
             }
             if(this.vel.y > 0) {
@@ -438,7 +462,7 @@ class Player {
             }
             else {
                 //don't bounce
-                if(shouldChangeVel) this.vel.y=0;
+                if(shouldChangeVel) this.vel.y*=plat.properties.bounciness||0;
                 plat.properties.onTouch? plat.properties.onTouch(): false;
             }
             this.collisionTimer = 0;
@@ -446,7 +470,9 @@ class Player {
     }
 
     reset() {
+        this.speedrunTimerStarted = false;
         this.dead = false;
+        this.won = false;
         this.pos.mult(0);
         this.vel.mult(0);
         this.groundTimer = 0;
@@ -469,9 +495,8 @@ class Player {
     }
 
     win() {
-        this.dead = true;//loool
-        currLevel ++;
-        loadLevel(currLevel);
+        this.speedrunTimerStarted = false;
+        this.won = true;
     }
 
     bounce(v) {
@@ -494,28 +519,46 @@ class Player {
         this.lastCollidedPlatform.properties.onBounce? this.lastCollidedPlatform.properties.onBounce(): false;
     }
 
+    getInput(control, isJustPressed) {
+        return !this.won && getInput(control, isJustPressed);
+    }
+
     update(dt) {
+        if(getInput("r", true)) {
+            this.reset();
+        }
+        if(this.won) {
+            if(!this.bestTimes[currLevel] || this.bestTimes[currLevel] > this.speedrunTimer) {
+                this.bestTimes[currLevel] = this.speedrunTimer;
+            }
+            dt /= 5;
+            if(getInput("n", true)) {
+                this.reset();
+                currLevel ++;
+                loadLevel(currLevel);
+            }
+        }
         var movement = new Vect();
         this.smoothedVel.add(Vect.mult(Vect.sub(this.vel, this.smoothedVel), 1-frictionDT(0.9, dt)));//for camera
 
-        if(getInput(this.controls.toggleBuilder, true)) {
+        if(this.getInput(this.controls.toggleBuilder, true)) {
             this.god.active = !this.god.active;
             if(this.god.active) {
                 this.reset();
             }
         }
         if(this.god.active) {
-            var speed = getInput(this.controls.sprint)? settings.godSpeed*5: settings.godSpeed;
-            this.pos.x += (getInput(this.controls.right) - getInput(this.controls.left)) * speed;
-            this.pos.y += (getInput(this.controls.down) - getInput(this.controls.up)) * speed;
-            cam.targetScale = getInput(this.controls.sprint)? h100 / 15: h100 / 6;
+            var speed = this.getInput(this.controls.sprint)? settings.godSpeed*5: settings.godSpeed;
+            this.pos.x += (this.getInput(this.controls.right) - this.getInput(this.controls.left)) * speed;
+            this.pos.y += (this.getInput(this.controls.down) - this.getInput(this.controls.up)) * speed;
+            cam.targetScale = this.getInput(this.controls.sprint)? h100 / 15: this.getInput(this.controls.zoomIn)? h100 / 2: h100 / 6;
 
-            if(getInput(this.controls.switchBuildType, true)) {
+            if(this.getInput(this.controls.switchBuildType, true)) {
                 //cycle place type
                 this.god.placeType = Platform.types[(Platform.types.indexOf(this.god.placeType)+1)%Platform.types.length];
             }
 
-            if(getInput(this.controls.grapple, true)) {
+            if(this.getInput(this.controls.grapple, true)) {
                 //start build
                 let p = cam.toGlobal(mouse);
 
@@ -536,7 +579,7 @@ class Player {
                     this.god.building = true;
                 }
             }
-            else if(this.god.building && !getInput(this.controls.grapple)) {
+            else if(this.god.building && !this.getInput(this.controls.grapple)) {
                 this.god.building = false;
                 
                 //get mouse pos
@@ -556,7 +599,13 @@ class Player {
                 }
             }
 
-            if(getInput(this.controls.clearLevel, true) && confirm("Clear entire level?")) {
+            let temp = this.getInput("arrowright", true) - this.getInput("arrowleft", true);
+            if(temp) {
+                currLevel += temp;
+                loadLevel(currLevel);
+            }
+
+            if(this.getInput(this.controls.clearLevel, true) && confirm("Clear entire level?")) {
                 //explod
                 platforms = [];
             }
@@ -567,11 +616,11 @@ class Player {
         }
 
         //check for grapple
-        if(getInput(this.controls.grapple, true)) {
+        if(this.getInput(this.controls.grapple, true)) {
             //grapple buffer
             this.grapple.grappleBufferTime = 0;
         }
-        if(this.grapple.grappleBufferTime < settings.jumpBufferTime) {
+        if(this.grapple.grappleBufferTime < settings.grappleBufferTime) {
             //grapple
             var stuff = this.raycastGrapple();
             if(stuff && stuff[2]) {
@@ -581,9 +630,10 @@ class Player {
                 this.grapple.grappling = true;
                 this.grapple.castAnim = 0;
                 this.grapple.grappleBufferTime = 999;
+                this.speedrunTimerStarted = true;
             }
         }
-        if(!getInput(this.controls.grapple) && this.grapple.grappling) {
+        if(!this.getInput(this.controls.grapple) && this.grapple.grappling) {
             //ungrapple
             this.grapple.grappling = false;
             particles.push(new Rope (this.grapple.pos.x,this.grapple.pos.y, this.center.x, this.center.y, this.grapple.grappleLength, settings.ropeParticleTimer, this.vel));
@@ -592,7 +642,7 @@ class Player {
                 this.vel.add(Vect.mult(Vect.normalize(Vect.sub(this.grapple.pos, this.center)), 2));
             }
         }
-        if(getInput(this.controls.bounce, true)) {
+        if(this.getInput(this.controls.bounce, true)) {
             //bounce
             if(this.lastCollisionTimer < settings.bounceTime) {
                 this.bounce(this.bounceVel);
@@ -601,7 +651,7 @@ class Player {
                 this.bounceTimer = 0;//bounce buffer
             }
         }
-        if(getInput(this.controls.grapplePull,true) && this.grapple.grappling && this.grapple.slackTimer < 5) {
+        if(this.getInput(this.controls.grapplePull,true) && this.grapple.grappling && this.grapple.slackTimer < 5) {
             //pull
             this.grapple.grappling = false;
             let pullForce = Vect.sub(this.grapple.pos, this.center);
@@ -612,8 +662,11 @@ class Player {
         
         //accelerate
         var airSpeed = lerp(limit(this.vel.mag(), 0, 1), 0.5, 1) * settings.playerAirSpeed;
-        this.moveDir = getInput(this.controls.right) - getInput(this.controls.left);
+        this.moveDir = this.getInput(this.controls.right) - this.getInput(this.controls.left);
         this.vel.x += (this.walking? settings.playerSpeed: airSpeed) * this.moveDir * dt;//hehe
+        if(this.moveDir) {
+            this.speedrunTimerStarted = true;
+        }
 
         //jump
         if(this.groundTimer < settings.coyoteTime && this.jumpBufferTimer < settings.jumpBufferTime) {
@@ -622,6 +675,7 @@ class Player {
             this.squish.y = 0;//important
             this.squishVel.y = settings.playerJump;
             this.groundTimer = 999;
+            this.speedrunTimerStarted = true;
         }
 
         if(this.walking) {
@@ -629,15 +683,15 @@ class Player {
 
             
         }
-        if(getInput(this.controls.down, false)) {
-            this.squishVel.y += getInput(this.controls.down, true)? 3: 0.5 * dt;
-            if(getInput(this.controls.down, true)) {
+        if(this.getInput(this.controls.down, false)) {
+            this.squishVel.y += this.getInput(this.controls.down, true)? 3: 0.5 * dt;
+            if(this.getInput(this.controls.down, true)) {
                 this.squish.y = 0;
                 this.stretching[1] = false;
             }
         }
         if(this.grapple.grappling) {
-            if(getInput(this.controls.up, false)) {
+            if(this.getInput(this.controls.up, false)) {
                 //pull ish
                 let pullSpeed = this.vel.mag()/4+2;
                 let newLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - pullSpeed * dt);
@@ -665,7 +719,7 @@ class Player {
                 }
             }
 
-            if(getInput(this.controls.down, false)) {
+            if(this.getInput(this.controls.down, false)) {
                 //down ish
                 this.grapple.grappleLength = dist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y);
             }
@@ -732,12 +786,12 @@ class Player {
         this.bounceTimer += dt;
         this.groundTimer += dt;
         this.jumpBufferTimer += dt;
-        if(getInput(this.controls.up, true)) {
+        if(this.getInput(this.controls.up, true)) {
             this.jumpBufferTimer = 0;
         }
 
         //move (you used to be able to go through walls so dt it is :)
-        var technicallyVel = Math.max(Math.abs(this.vel.x),Math.abs(this.vel.y));
+        var technicallyVel = dt * Math.max(Math.abs(this.vel.x),Math.abs(this.vel.y));
         var moveTimes = Math.max(1, Math.ceil(technicallyVel/(settings.platformSnap+this.size.x)));
         //moveAndSlide()
         movement.add(Vect.mult(this.vel, dt));
@@ -749,7 +803,7 @@ class Player {
         let oldSquish = Vect.get(this.squish);
         this.squishVel.mult(frictionDT(0.8, dt));//aah i hate dt
         this.squishVel.sub(Vect.mult(this.squish, 0.1 * dt));
-        this.squish.add(this.squishVel);
+        this.squish.add(Vect.mult(this.squishVel, dt));
         
         //stretch check
         if(Math.sign(this.squish.x) !== Math.sign(oldSquish.x) && oldSquish.x!==0) this.stretching[0] = !this.stretching[0];
@@ -759,8 +813,11 @@ class Player {
         if(Math.abs(this.squishVel.x) < 0.05 && Math.abs(this.squish.x) < 0.05) {this.squish.x = 0; this.stretching[0] = false;}
         if(Math.abs(this.squishVel.y) < 0.05 && Math.abs(this.squish.y) < 0.05) {this.squish.y = 0; this.stretching[1] = false;}
 
-        if(this.dead) {
+        if(this.dead && !this.won) {
             this.reset();
+        }
+        else if(this.speedrunTimerStarted) {
+            this.speedrunTimer = (Date.now() - this.speedrunTimerStart) / 1000;
         }
     }
 }
