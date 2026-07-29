@@ -71,3 +71,7 @@ class Rope {
         
     }
 }
+class Dust {
+    update() {}
+    display() {}
+}
