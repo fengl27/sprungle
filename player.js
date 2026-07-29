@@ -532,7 +532,7 @@ class Player {
                 this.bestTimes[currLevel] = this.speedrunTimer;
             }
             dt /= 5;
-            if(getInput("n", true)) {
+            if(getInput(" ", true)) {
                 this.reset();
                 currLevel ++;
                 loadLevel(currLevel);

@@ -48,18 +48,28 @@ function frame() {
         var bestTime = player.bestTimes[currLevel]? player.bestTimes[currLevel]: 0;
         var bestTimeTxt = "Best " + Math.floor(bestTime / 60).toString().padStart(2, "0") + ":" + (bestTime%60).toFixed(2).toString().padStart(5, "0");
         
+        player.won = true;
         if(player.won) {
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(Math.sin(Date.now() / 150) * 0.2);
             ctx.font = h100 * 25 + "px pixelFont";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.strokeText(txt, canvas.width/2, canvas.height/2);
-            ctx.fillText(txt, canvas.width/2, canvas.height/2);
+            ctx.strokeText(txt, 0, 0);
+            ctx.fillText(txt, 0, 0);
 
             if(player.bestTimes[currLevel] === player.speedrunTimer) {
                 ctx.font = h100 * 8 + "px pixelFont";
-                ctx.strokeText("New best!", canvas.width / 2, canvas.height / 2 + h100 * 8);
-                ctx.fillText("New best!", canvas.width / 2, canvas.height / 2 + h100 * 8);
+                ctx.strokeText("New best!", 0, h100 * 8);
+                ctx.fillText("New best!", 0, h100 * 8);
             }
+            ctx.restore();
+
+            ctx.font = h100 * 5 + "px pixelFont";
+            ctx.textAlign = "center";
+            ctx.strokeText("Press R to restart and space to continue!", canvas.width/2, h100 * 97);
+            ctx.fillText("Press R to restart and space to continue!", canvas.width/2, h100 * 97);
         }
         else {
             ctx.strokeText(txt, h100, h100);
