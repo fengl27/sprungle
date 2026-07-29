@@ -48,7 +48,6 @@ function frame() {
         var bestTime = player.bestTimes[currLevel]? player.bestTimes[currLevel]: 0;
         var bestTimeTxt = "Best " + Math.floor(bestTime / 60).toString().padStart(2, "0") + ":" + (bestTime%60).toFixed(2).toString().padStart(5, "0");
         
-        player.won = true;
         if(player.won) {
             ctx.save();
             ctx.translate(canvas.width / 2, canvas.height / 2);
