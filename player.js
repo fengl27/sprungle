@@ -211,7 +211,7 @@ class Player {
 
         ctx.save();
 
-        if(!this.walking && this.groundTimer > settings.coyoteTime) {
+        if(!this.walking && this.collisionTimer > settings.coyoteTime) {
             if(this.grapple.grappling) {
                 var diff = Vect.sub(this.center, this.grapple.pos);
                 diff.normalize();
@@ -419,8 +419,9 @@ class Player {
                 this.bounceVelDir = new Vect(Math.sign(this.vel.x), 0);
                 this.lastCollisionTimer = 0;
                 this.lastCollidedPlatform = plat;
+                this.squish.x = 0;
+                this.stretching[0] = false;
             }
-            this.stretching[0] = false;
             this.squishVel.x += this.vel.x / 2;
             this.pos.x = Math.sign(moveAmt.x) === 1? plat.pos.x - this.size.x: plat.pos.x + plat.size.x;
             if(this.bounceTimer < settings.bounceTime*2 && this.lastCollisionTimer === 0) {//you literally just hit the platform
@@ -441,6 +442,7 @@ class Player {
             if(this.collisionTimer > settings.coyoteTime) {
                 this.stretching[1] = false;
                 this.squishVel.y += this.vel.y / 2;
+                this.squish.y = 0;
 
                 this.bounceVel.set(this.vel);
                 this.bounceVel.y *= -settings.bouncePower;
@@ -558,26 +560,39 @@ class Player {
                 this.god.placeType = Platform.types[(Platform.types.indexOf(this.god.placeType)+1)%Platform.types.length];
             }
 
-            if(this.getInput(this.controls.grapple, true)) {
+            if(this.getInput(this.controls.grapplePull, true)) {
                 //start build
                 let p = cam.toGlobal(mouse);
 
                 //delete stuff
-                var deleted = false;
-                for(var i = 0; i < platforms.length; i ++) {
-                    if(IsPointInAABB(p, platforms[i].pos, platforms[i].size)) {
+                var allPlatforms = platforms.concat(...platformDecorationLayers);
+                for(var i = 0; i < allPlatforms.length; i ++) {
+                    if(IsPointInAABB(p, allPlatforms[i].pos, allPlatforms[i].size)) {
                         //die
-                        platforms.splice(i, 1);
-                        deleted = true;
-                        i --;//don't skip any
+                        allPlatforms[i].dead = true;
+                        break;
                     }
                 }
-                if(!deleted) {
-                    p.set(settings.platformSnap*Math.floor(p.x/settings.platformSnap), settings.platformSnap*Math.floor(p.y/settings.platformSnap));//ee
-
-                    this.god.platformStart.set(p);
-                    this.god.building = true;
+            }
+            else if(this.getInput("mouseMiddle", true)) {
+                let p = cam.toGlobal(mouse);
+                //eyedropper (i drop eyes)
+                var allPlatforms = platforms.concat(...platformDecorationLayers);
+                for(var i = 0; i < allPlatforms.length; i ++) {
+                    if(IsPointInAABB(p, allPlatforms[i].pos, allPlatforms[i].size)) {
+                        //die
+                        this.god.placeType = allPlatforms[i].type;
+                        break;
+                    }
                 }
+            }
+            else if(this.getInput(this.controls.grapple, true)) {
+                let p = cam.toGlobal(mouse);
+
+                p.set(settings.platformSnap*Math.floor(p.x/settings.platformSnap), settings.platformSnap*Math.floor(p.y/settings.platformSnap));//ee
+
+                this.god.platformStart.set(p);
+                this.god.building = true;
             }
             else if(this.god.building && !this.getInput(this.controls.grapple)) {
                 this.god.building = false;
@@ -595,7 +610,8 @@ class Player {
                     Math.max(this.god.platformStart.y, p.y)+settings.platformSnap,
                 );
                 if(tl.x !== br.x && tl.y !== br.y) {//no lines allowed (they shouldn't be possible i think)
-                    platforms.push(new Platform(tl, Vect.sub(br, tl), this.god.placeType));
+                    var newPlatform = new Platform(tl, Vect.sub(br, tl), this.god.placeType);
+                    Platform.addPlatform(platforms, platformDecorationLayers, newPlatform);
                 }
             }
 
@@ -812,6 +828,8 @@ class Player {
         //not squishing anymore check
         if(Math.abs(this.squishVel.x) < 0.05 && Math.abs(this.squish.x) < 0.05) {this.squish.x = 0; this.stretching[0] = false;}
         if(Math.abs(this.squishVel.y) < 0.05 && Math.abs(this.squish.y) < 0.05) {this.squish.y = 0; this.stretching[1] = false;}
+        
+        console.log(this.stretching[1], this.groundTimer);
 
         if(this.dead && !this.won) {
             this.reset();

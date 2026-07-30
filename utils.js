@@ -336,11 +336,12 @@ keys.handleKeyDown = function(e) {
         console.log(log);
         */
         var log = "";
-        for(var i = 0; i < platforms.length; i ++) {
-            let p = platforms[i].pos;
-            let s = platforms[i].size;
-            log += `${(p.x).toString(36)}/${p.y.toString(36)}/${s.x.toString(36)}/${s.y.toString(36)}/${Platform.types.indexOf(platforms[i].type).toString(36)}`;
-            if(i !== platforms.length - 1) {
+        var allPlatforms = platforms.concat(...platformDecorationLayers);
+        for(var i = 0; i < allPlatforms.length; i ++) {
+            let p = allPlatforms[i].pos;
+            let s = allPlatforms[i].size;
+            log += `${(p.x).toString(36)}/${p.y.toString(36)}/${s.x.toString(36)}/${s.y.toString(36)}/${Platform.types.indexOf(allPlatforms[i].type).toString(36)}`;
+            if(i !== allPlatforms.length - 1) {
                 log += "|";
             }
         }
@@ -372,12 +373,14 @@ function getInput(inputName, isJustPressed) {
         if(isJustPressed) {
             return inputName === "mouseLeft"? mouse.buttons[0][1]:
                 inputName === "mouseRight"? mouse.buttons[2][1]:
+                inputName === "mouseMiddle"? mouse.buttons[1][1]:
                 inputName === "space"? !!justPressed[" "]:
                 !!justPressed[inputName];
         }
         else {
             return inputName === "mouseLeft"? mouse.buttons[0][0]:
                 inputName === "mouseRight"? mouse.buttons[2][0]:
+                inputName === "mouseMiddle"? mouse.buttons[1][0]:
                 inputName === "space"? !!keys[" "]:
                 !!keys[inputName];
         }

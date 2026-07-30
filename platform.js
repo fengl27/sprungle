@@ -67,11 +67,114 @@ class Platform {
 			col: "rgb(7, 145, 7)",
 			bounciness: -1.1,
 			canGrapple: true
+		},
+		whiteDecor: {
+			decorationLayer: 1,//fronk decoration (also doens't get to be collision)
+			/*
+			collision: () => {false},
+			canGrapple: () => {false},
+			*/
+			col: "white",
+		},
+		factoryBackground: {
+			decorationLayer: 3,//mid decoration
+			col: "special",
+			display: function(p) {
+				var offsetThing = {
+					x: (((this.pos.x+4500) % 45) + 45) * cam.scale,
+					y: (((this.pos.y+4500) % 25) + 25) * cam.scale
+				};
+				ctx.save();
+				ctx.lineWidth = h100/5 * cam.scale;
+				ctx.fillStyle = "rgb(125, 125, 130)";
+				ctx.fillRect(p.x, p.y, this.size.x*cam.scale + 1, this.size.y*cam.scale + 1);
+				ctx.strokeStyle = "rgb(82, 82, 92)";
+				var globalY = this.pos.y;
+				for(var y = p.y - offsetThing.y; y < p.y + this.size.y*cam.scale; y += 25*cam.scale) {
+					var yThing = Math.floor(globalY / 25);
+					globalY += 25;
+					for(var x = p.x - offsetThing.x; x < p.x + this.size.x*cam.scale; x += 45*cam.scale) {
+						var goofyX = yThing%2===0? x+22.5*cam.scale: x;
+						/*
+						var tl = {
+							x: limit(goofyX,	p.x, p.x + this.size.x*cam.scale),
+							y: limit(y, 		p.y, p.y + this.size.y*cam.scale)
+						};
+						var br = {
+							x: limit(goofyX+45*cam.scale, 	p.x, p.x + this.size.x*cam.scale),
+							y: limit(y+25*cam.scale, 		p.y, p.y + this.size.y*cam.scale)
+						};
+						ctx.strokeRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+						*/
+						if(goofyX <= p.x + this.size.x * cam.scale + h100/10 && goofyX >= p.x) {
+							ctx.beginPath();
+							ctx.moveTo(goofyX, limit(y, p.y, p.y + this.size.y * cam.scale));
+							ctx.lineTo(goofyX, limit(y + 25*cam.scale, p.y, p.y + this.size.y * cam.scale));
+							ctx.stroke();
+						}
+					}
+					if(y >= p.y) {
+						ctx.beginPath();
+						ctx.moveTo(p.x, y);
+						ctx.lineTo(p.x+this.size.x*cam.scale + 0.7, y);
+						ctx.stroke();
+					}
+				}
+				ctx.restore();
+			}
+		},
+		darkFactoryBackground: {
+			decorationLayer: 2,//back decoration
+			col: "special",
+			display: function(p) {
+				var offsetThing = {
+					x: (((this.pos.x+4500) % 45) + 45) * cam.scale,
+					y: (((this.pos.y+4500) % 25) + 25) * cam.scale
+				};
+				ctx.save();
+				ctx.lineWidth = h100/5 * cam.scale;
+				ctx.fillStyle = "rgb(69, 69, 89)";
+				ctx.fillRect(p.x, p.y, this.size.x*cam.scale + 1, this.size.y*cam.scale + 1);
+				ctx.strokeStyle = "rgb(40, 40, 50)";
+				var globalY = this.pos.y;
+				for(var y = p.y - offsetThing.y; y < p.y + this.size.y*cam.scale; y += 25*cam.scale) {
+					var yThing = Math.floor(globalY / 25);
+					globalY += 25;
+					for(var x = p.x - offsetThing.x; x < p.x + this.size.x*cam.scale; x += 45*cam.scale) {
+						var goofyX = yThing%2===0? x+22.5*cam.scale: x;
+						/*
+						var tl = {
+							x: limit(goofyX,	p.x, p.x + this.size.x*cam.scale),
+							y: limit(y, 		p.y, p.y + this.size.y*cam.scale)
+						};
+						var br = {
+							x: limit(goofyX+45*cam.scale, 	p.x, p.x + this.size.x*cam.scale),
+							y: limit(y+25*cam.scale, 		p.y, p.y + this.size.y*cam.scale)
+						};
+						ctx.strokeRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+						*/
+						if(goofyX < p.x + this.size.x * cam.scale && goofyX >= p.x) {
+							ctx.beginPath();
+							ctx.moveTo(goofyX, limit(y, p.y, p.y + this.size.y * cam.scale));
+							ctx.lineTo(goofyX, limit(y + 25*cam.scale, p.y, p.y + this.size.y * cam.scale));
+							ctx.stroke();
+						}
+					}
+					if(y >= p.y) {
+						ctx.beginPath();
+						ctx.moveTo(p.x, y);
+						ctx.lineTo(p.x+this.size.x*cam.scale + 0.7, y);
+						ctx.stroke();
+					}
+				}
+				ctx.restore();
+			}
 		}
 	}
 
     constructor(pos, size, type) {
         this.pos = Vect.get(pos);
+		this.dead = false;
         this.size = Vect.get(size);
 		this.type = type || "normal";
 		this.properties = Platform.platformThings[this.type];
@@ -102,8 +205,25 @@ class Platform {
 			}
         }
     }
+
+	static addPlatform(platforms, platformDecorationLayers, plat) {
+		var layer = plat.properties.decorationLayer? plat.properties.decorationLayer: 0;
+		if(layer === 0) {
+			platforms.push(plat);
+		}
+		else {
+			layer --;
+			if(platformDecorationLayers[layer]) {
+				platformDecorationLayers[layer].push(plat);
+			}
+			else {
+				platformDecorationLayers[layer] = [plat];
+			}
+		}
+	}
 }
 var platforms = [];
+var platformDecorationLayers = [[], [], []];
 
 var currLevel = 1;
 
@@ -119,15 +239,17 @@ if(stuff) {
 function parseCode(levelCode) {
 	let lines = levelCode.split(" ").join("").split("\n").join(" ").split("\r").join(" ").split("|");//platforms
 	let parsedPlatforms = [];
+	let parsedLayers = [[], [], []];
 	for(var i = 0; i < lines.length; i ++) {
 		let words = lines[i].split("/");
-		parsedPlatforms.push(new Platform(
+		var newPlatform = new Platform(
 			new Vect(parseInt(words[0], 36), parseInt(words[1], 36)),
 			new Vect(parseInt(words[2], 36), parseInt(words[3], 36)),
 			Platform.types[parseInt(words[4], 36)]
-		));
+		);
+		Platform.addPlatform(parsedPlatforms, parsedLayers, newPlatform);
 	}
-	return parsedPlatforms;
+	return [parsedPlatforms, parsedLayers];
 }
 
 /*
@@ -147,15 +269,16 @@ function parseCode(levelCode) {
 */
 function loadLevel(level) {
 	if(customLevels[level]) {
-		platforms = parseCode(customLevels[level]);
+		[platforms, platformDecorationLayers] = parseCode(customLevels[level]);
 		return;
 	}
 	platforms = [];
+	platformDecorationLayers = [[], [], []];
 	try {
 		fetch(`levels/level${level}.txt`)
 			.then((res) => res.text())
 			.then((text) => {
-				platforms = parseCode(text);
+				[platforms, platformDecorationLayers] = parseCode(text);
 			})
 	}
 	catch(e) {
@@ -165,79 +288,5 @@ function loadLevel(level) {
 }
 
 loadLevel(currLevel);
-/*
-var platforms = [
-	new Platform(new Vect(-200, 100), new Vect(250, 10)),
-	new Platform(new Vect(-200, 0), new Vect(10, 100)),
-	new Platform(new Vect(330, -1130), new Vect(30, 910)),
-	new Platform(new Vect(1160, -140), new Vect(10, 10)),
-	new Platform(new Vect(1880, -140), new Vect(390, 20)),
-	new Platform(new Vect(690, -330), new Vect(1190, 10)),
-	new Platform(new Vect(1880, -330), new Vect(390, 20)),
-	new Platform(new Vect(690, -1020), new Vect(10, 690)),
-	new Platform(new Vect(360, -1020), new Vect(330, 10)),
-	new Platform(new Vect(350, -1200), new Vect(10, 70)),
-	new Platform(new Vect(340, -1160), new Vect(10, 20)),
-	new Platform(new Vect(330, -1140), new Vect(10, 10)),
-	new Platform(new Vect(530, -1030), new Vect(10, 10)),
-	new Platform(new Vect(510, -1090), new Vect(10, 70)),
-	new Platform(new Vect(630, -1060), new Vect(10, 40)),
-	new Platform(new Vect(570, -1110), new Vect(20, 90)),
-	new Platform(new Vect(580, -1160), new Vect(10, 50)),
-	new Platform(new Vect(690, -1080), new Vect(20, 70)),
-	new Platform(new Vect(700, -1130), new Vect(10, 50)),
-	new Platform(new Vect(700, -1150), new Vect(10, 10)),
-	new Platform(new Vect(590, -1170), new Vect(10, 10)),
-	new Platform(new Vect(560, -1130), new Vect(10, 10)),
-	new Platform(new Vect(2260, -1140), new Vect(10, 810)),
-	new Platform(new Vect(2660, -450), new Vect(20, 20)),
-	new Platform(new Vect(2910, -270), new Vect(20, 30)),
-	new Platform(new Vect(3270, -490), new Vect(80, 20)),
-	new Platform(new Vect(3320, -10), new Vect(220, 10)),
-	new Platform(new Vect(3470, -270), new Vect(20, 30)),
-	new Platform(new Vect(3570, -450), new Vect(40, 30)),
-	new Platform(new Vect(3770, -360), new Vect(30, 20)),
-	new Platform(new Vect(3760, -440), new Vect(20, 20)),
-	new Platform(new Vect(3700, -210), new Vect(10, 40)),
-	new Platform(new Vect(3920, -230), new Vect(20, 10)),
-	new Platform(new Vect(3990, -360), new Vect(10, 20)),
-	new Platform(new Vect(3960, -450), new Vect(10, 10)),
-	new Platform(new Vect(4130, -410), new Vect(30, 10)),
-	new Platform(new Vect(4230, -350), new Vect(30, 10)),
-	new Platform(new Vect(4260, -250), new Vect(10, 10)),
-	new Platform(new Vect(4130, -210), new Vect(10, 10)),
-	new Platform(new Vect(4260, -290), new Vect(20, 10)),
-	new Platform(new Vect(4440, -290), new Vect(30, 10)),
-	new Platform(new Vect(4500, -170), new Vect(20, 10)),
-	new Platform(new Vect(4390, -260), new Vect(10, 10)),
-	new Platform(new Vect(4370, -390), new Vect(20, 10)),
-	new Platform(new Vect(4600, -400), new Vect(40, 10)),
-	new Platform(new Vect(4780, -260), new Vect(10, 10)),
-	new Platform(new Vect(4730, -110), new Vect(10, 10)),
-	new Platform(new Vect(4670, -280), new Vect(10, 10)),
-	new Platform(new Vect(4780, -360), new Vect(10, 10)),
-	new Platform(new Vect(5350, -380), new Vect(140, 10)),
-	new Platform(new Vect(6160, -1520), new Vect(20, 1110)),
-	new Platform(new Vect(6160, -190), new Vect(20, 1710)),
-	new Platform(new Vect(1020, -130), new Vect(10, 1600)),
-	new Platform(new Vect(1030, -130), new Vect(850, 10)),
-	new Platform(new Vect(690, -320), new Vect(10, 90)),
-	new Platform(new Vect(-1820, 100), new Vect(1410, 10)),
-	new Platform(new Vect(-1690, -390), new Vect(1320, 10)),
-	new Platform(new Vect(-3270, 190), new Vect(1030, 10), "death"),
-	new Platform(new Vect(-2250, 200), new Vect(10, 1470), "death"),
-	new Platform(new Vect(-3460, -210), new Vect(20, 20)),
-	new Platform(new Vect(-3820, 150), new Vect(70, 10)),
-	new Platform(new Vect(-3820, 100), new Vect(10, 50)),
-	new Platform(new Vect(-4010, 60), new Vect(10, 10)),
-	new Platform(new Vect(-3970, 60), new Vect(10, 10)),
-	new Platform(new Vect(-4020, 100), new Vect(70, 10)),
-	new Platform(new Vect(-4030, 80), new Vect(90, 20)),
-	new Platform(new Vect(6990, -540), new Vect(20, 510), "win"),
-	new Platform(new Vect(6180, -550), new Vect(840, 10), "death"),
-	new Platform(new Vect(7010, -540), new Vect(10, 520), "death"),
-	new Platform(new Vect(6180, -30), new Vect(830, 10), "death"),
-];
-*/
 
 Platform.types = Object.keys(Platform.platformThings);

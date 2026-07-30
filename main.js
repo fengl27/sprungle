@@ -21,21 +21,50 @@ function frame() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     player.update(performanceTracker.dt);
-    player.display();
+    
     for(var i = particles.length-1; i >= 0; i --) {
         particles[i].update(0.5);
-        particles[i].display();
         if(!particles[i].alive) {
             particles.splice(i, 1);
         }
     }
+    let checkDead = (platforms) => {
+        for(var i = 0; i < platforms.length; i ++) {
+            if(platforms[i].dead) {
+                platforms.splice(i, 1);
+                i --;
+            }
+        }
+    };
+    checkDead(platforms);
+    for(var i = 0; i < platformDecorationLayers.length; i ++) {
+        checkDead(platformDecorationLayers[i]);
+    }
     if(!player.god.active) {
+        for(var j = platformDecorationLayers.length - 1; j >= 1; j --) {
+            for(var i = 0; i < platformDecorationLayers[j].length; i ++) {
+                platformDecorationLayers[j][i].border();
+            }
+            for(var i = 0; i < platformDecorationLayers[j].length; i ++) {
+                platformDecorationLayers[j][i].display();
+            }
+        }
+        for(var i = 0; i < particles.length; i ++) {
+            particles[i].display();
+        }
         for(var i = 0; i < platforms.length; i ++) {
             platforms[i].border();
         }
         for(var i = 0; i < platforms.length; i ++) {
             platforms[i].display();
         }
+        for(var i = 0; i < platformDecorationLayers[0].length; i ++) {
+            platformDecorationLayers[0][i].border();
+        }
+        for(var i = 0; i < platformDecorationLayers[0].length; i ++) {
+            platformDecorationLayers[0][i].display();
+        }
+        player.display();
         ctx.save();
         //speedrun ui
         ctx.strokeStyle = "black";
@@ -82,10 +111,24 @@ function frame() {
         ctx.restore();
     }
     else {
+        for(var j = platformDecorationLayers.length - 1; j >= 1; j --) {
+            for(var i = 0; i < platformDecorationLayers[j].length; i ++) {
+                platformDecorationLayers[j][i].border();
+                platformDecorationLayers[j][i].display();
+            }
+        }
+        for(var i = 0; i < particles.length; i ++) {
+            particles[i].display();
+        }
         for(var i = 0; i < platforms.length; i ++) {
             platforms[i].border();
             platforms[i].display();
         }
+        for(var i = 0; i < platformDecorationLayers[0].length; i ++) {
+            platformDecorationLayers[0][i].border();
+            platformDecorationLayers[0][i].display();
+        }
+        player.display();
 
         //god ui
         ctx.strokeStyle = "black";
