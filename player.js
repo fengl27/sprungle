@@ -694,7 +694,7 @@ class Player {
             if(this.getInput(this.controls.up, false)) {
                 //pull ish
                 let pullSpeed = this.vel.mag()/4+2;
-                let newLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - pullSpeed * dt);
+                let newLength = Math.max(Math.max(this.size.x*2,this.size.y*2), this.grapple.grappleLength - pullSpeed * dt);
                 //this.grapple.grappleLength = Math.max(Math.max(this.size.x,this.size.y), this.grapple.grappleLength - pullSpeed * dt);
                 if(sqrDist(this.center.x, this.center.y, this.grapple.pos.x, this.grapple.pos.y) > newLength * newLength) {
                     //we have to pull the player :)
