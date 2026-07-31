@@ -169,7 +169,16 @@ class Platform {
 				}
 				ctx.restore();
 			}
-		}
+		},
+
+		cloud: {
+			decorationLayer: 2,
+			col: special,
+			border: () => {},
+			display: p => {
+				
+			}
+		},
 	}
 
     constructor(pos, size, type) {
