@@ -169,7 +169,54 @@ class Platform {
 				}
 				ctx.restore();
 			}
-		}
+		},
+		starBackground: {
+			decorationLayer: 3,//mid decoration
+			col: "special",
+			display: function(p) {
+				var offsetThing = {
+					x: (((this.pos.x+4500) % 45) + 45) * cam.scale,
+					y: (((this.pos.y+4500) % 25) + 25) * cam.scale
+				};
+				ctx.save();
+				ctx.lineWidth = h100/5 * cam.scale;
+				ctx.fillStyle = "rgb(54, 54, 85)";
+				ctx.fillRect(p.x, p.y, this.size.x*cam.scale + 1, this.size.y*cam.scale + 1);
+				ctx.fillStyle = "rgb(223, 223, 245)";
+				var globalY = this.pos.y;
+				for(var y = p.y - offsetThing.y; y < p.y + this.size.y*cam.scale; y += 25*cam.scale) {
+					var yThing = Math.floor(globalY / 25);
+					globalY += 25;
+					for(var x = p.x - offsetThing.x; x < p.x + this.size.x*cam.scale; x += 45*cam.scale) {
+						var goofyX = yThing%2===0? x+22.5*cam.scale: x;
+						/*
+						var tl = {
+							x: limit(goofyX,	p.x, p.x + this.size.x*cam.scale),
+							y: limit(y, 		p.y, p.y + this.size.y*cam.scale)
+						};
+						var br = {
+							x: limit(goofyX+45*cam.scale, 	p.x, p.x + this.size.x*cam.scale),
+							y: limit(y+25*cam.scale, 		p.y, p.y + this.size.y*cam.scale)
+						};
+						ctx.strokeRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+						*/
+						if(goofyX <= p.x + this.size.x * cam.scale + h100/10 && goofyX >= p.x) {
+							ctx.beginPath();
+							ctx.moveTo(goofyX, limit(y, p.y, p.y + this.size.y * cam.scale));
+							ctx.lineTo(goofyX, limit(y + 25*cam.scale, p.y, p.y + this.size.y * cam.scale));
+							ctx.stroke();
+						}
+					}
+					if(y >= p.y) {
+						ctx.beginPath();
+						ctx.moveTo(p.x, y);
+						ctx.lineTo(p.x+this.size.x*cam.scale + 0.7, y);
+						ctx.stroke();
+					}
+				}
+				ctx.restore();
+			}
+		},
 	}
 
     constructor(pos, size, type) {
