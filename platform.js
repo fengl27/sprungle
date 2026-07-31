@@ -173,11 +173,64 @@ class Platform {
 
 		cloud: {
 			decorationLayer: 2,
-			col: special,
-			border: () => {},
-			display: p => {
-				
+			col: "special",
+			outline: function(p) {
+				if(player.god.active) {
+            		ctx.fillRect(Math.round(p.x - 3), Math.round(p.y - 3), this.size.x*cam.scale + 6, this.size.y*cam.scale + 6);
+				}
+			},
+			display: function(p) {
+				var center = Vect.add(Vect.div(this.size, 2), this.pos);
+				if(!this.cloudThings) {
+					this.cloudThings = [];
+					for(var i = 0; i < 100; i ++) {
+						this.cloudThings.push({
+							pos: new Vect(
+								this.pos.x + this.size.x * Math.random(),
+								this.pos.y + this.size.y * Math.random()
+							),
+							size: lerp(20, 50, easings.easeInQuad(Math.random())),
+							phase: Math.random() * Math.PI * 4
+						});
+					}
+				}
+				if(Math.random() < 0.2) {
+					this.cloudThings.push({
+						pos: new Vect(
+							this.pos.x,
+							this.pos.y + this.size.y * Math.random()
+						),
+						size: lerp(20, 50, easings.easeInQuad(Math.random())),
+						phase: Math.random() * Math.PI * 4
+					});
+				}
+
+				for(var i = 0; i < this.cloudThings.length; i ++) {
+					var dst = dist(center.x*(this.size.y/this.size.x), center.y, this.cloudThings[i].pos.x* (this.size.y/this.size.x), this.cloudThings[i].pos.y);//ellipse
+					var opacity = easings.easeInOutQuad(1-limit(dst / this.size.y * 2, 0, 1)) * 0.4;
+					ctx.fillStyle = "rgba(255, 255, 255, " + opacity + ")";
+
+					var size = lerp(0.9, 1.1, (Math.sin(this.cloudThings[i].phase) + 1) / 2) * this.cloudThings[i].size * cam.scale;
+					var p = cam.toScreen(this.cloudThings[i].pos);
+					ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
+
+					this.cloudThings[i].pos.y += Math.sin(this.cloudThings[i].phase * 0.5) * 0.5;
+					this.cloudThings[i].phase += 2 / this.cloudThings[i].size;
+					this.cloudThings[i].pos.x += 0.2 + 4 / this.cloudThings[i].size;
+					if(this.cloudThings[i].pos.x > this.pos.x+this.size.x) {
+						this.cloudThings.splice(i, 1);
+						i --;
+					}
+ 				}
 			}
+		},
+		blackDecor: {
+			decorationLayer: 1,//fronk decoration (also doens't get to be collision)
+			/*
+			collision: () => {false},
+			canGrapple: () => {false},
+			*/
+			col: "rgb(20, 20, 20)",
 		},
 	}
 
