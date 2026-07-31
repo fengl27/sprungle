@@ -224,6 +224,33 @@ class Platform {
  				}
 			}
 		},
+		starBackground: {
+			decorationLayer: 3,//mid decorationas
+			col: "special",
+			display: function(p) {
+				ctx.save();
+				ctx.lineWidth = h100/5 * cam.scale;
+				ctx.fillStyle = "rgb(54, 54, 85)";
+				ctx.fillRect(p.x, p.y, this.size.x*cam.scale + 1, this.size.y*cam.scale + 1);
+				ctx.fillStyle = "rgb(223, 223, 245)";
+				let parralaxOffset = Vect.sub(Vect.mult(Vect.add(this.pos,player.pos), 0.1),this.pos);
+				let parralaxOffsetIndexChange = new Vect(Math.floor(parralaxOffset.x / settings.platformSnap), Math.floor(parralaxOffset.y / settings.platformSnap));
+				for(var i = -1; i < this.size.x/settings.platformSnap; i += 1) {
+					for(var j = -1; j < this.size.y/settings.platformSnap; j += 1) {
+						for(var k = 0; k < (hash(hash((i-parralaxOffsetIndexChange.x)) + (j-parralaxOffsetIndexChange.y)) * 1.5-1)/2; k ++) {
+							let starPos = Vect.add(parralaxOffset, new Vect(this.pos.x + (i-parralaxOffsetIndexChange.x) * settings.platformSnap + hash(this.pos.y + this.pos.x + (j-parralaxOffsetIndexChange.y)) * settings.platformSnap, this.pos.y + (j-parralaxOffsetIndexChange.y) * settings.platformSnap + hash(this.pos.x + this.pos.y + (i-parralaxOffsetIndexChange.x)) * settings.platformSnap));
+							let starScreenPos = cam.toScreen(starPos);
+							if(starScreenPos.x < p.x + this.size.x * cam.scale + 2 && starScreenPos.x > p.x-2 && starScreenPos.y < p.y + this.size.y * cam.scale + 2 && starScreenPos.y > p.y-2) {
+								ctx.beginPath();
+								ctx.arc(starScreenPos.x, starScreenPos.y, (hash(hash(j-parralaxOffsetIndexChange.y) + (i-parralaxOffsetIndexChange.x)) * 1 + 0.5) * cam.scale, 0, 2*Math.PI);
+								ctx.fill();
+							}
+						}
+					}
+				}
+				ctx.restore();
+			}
+		},
 		blackDecor: {
 			decorationLayer: 1,//fronk decoration (also doens't get to be collision)
 			/*
