@@ -40,6 +40,9 @@ class Player {
             toggleBuilder: "o",
             clearLevel: "c",//god only
             switchBuildType: "e",//god only (switch platform building type)
+            placePlatform: "mouseLeft",//god only
+            erasePlatform: "mouseRight",//god only 
+            eyedropper: "mouseMiddle",//god only (copy platform type)
 
             zoomIn: "q",//god only (zoom in (duh))
         };
@@ -560,7 +563,7 @@ class Player {
                 this.god.placeType = Platform.types[(Platform.types.indexOf(this.god.placeType)+1)%Platform.types.length];
             }
 
-            if(this.getInput(this.controls.grapplePull, true)) {
+            if(this.getInput(this.controls.placePlatform, true)) {
                 //start build
                 let p = cam.toGlobal(mouse);
 
@@ -574,7 +577,7 @@ class Player {
                     }
                 }
             }
-            else if(this.getInput("mouseMiddle", true)) {
+            else if(this.getInput(this.controls.eyedropper, true)) {
                 let p = cam.toGlobal(mouse);
                 //eyedropper (i drop eyes)
                 var allPlatforms = platforms.concat(...platformDecorationLayers);
@@ -586,7 +589,7 @@ class Player {
                     }
                 }
             }
-            else if(this.getInput(this.controls.grapple, true)) {
+            else if(this.getInput(this.controls.placePlatform, true)) {
                 let p = cam.toGlobal(mouse);
 
                 p.set(settings.platformSnap*Math.floor(p.x/settings.platformSnap), settings.platformSnap*Math.floor(p.y/settings.platformSnap));//ee
@@ -594,7 +597,7 @@ class Player {
                 this.god.platformStart.set(p);
                 this.god.building = true;
             }
-            else if(this.god.building && !this.getInput(this.controls.grapple)) {
+            else if(this.god.building && !this.getInput(this.controls.placePlatform)) {
                 this.god.building = false;
                 
                 //get mouse pos
