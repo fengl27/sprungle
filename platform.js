@@ -2,7 +2,7 @@ class Platform {
 
 	static platformThings = {
 		normal: {
-			col: "grey",
+			col: "rgb(148, 148, 148)",
 			canGrapple: true
 		},
 		noGrapple: {
@@ -86,7 +86,7 @@ class Platform {
 				};
 				ctx.save();
 				ctx.lineWidth = h100/5 * cam.scale;
-				ctx.fillStyle = "rgb(125, 125, 130)";
+				ctx.fillStyle = "rgb(105, 105, 120)";
 				ctx.fillRect(p.x, p.y, this.size.x*cam.scale + 1, this.size.y*cam.scale + 1);
 				ctx.strokeStyle = "rgb(82, 82, 92)";
 				var globalY = this.pos.y;
@@ -287,6 +287,6 @@ function loadLevel(level) {
 	console.log("loaded level :)");
 }
 
-loadLevel(currLevel);
-
 Platform.types = Object.keys(Platform.platformThings);
+
+loadLevel(currLevel);

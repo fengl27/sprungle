@@ -832,7 +832,6 @@ class Player {
         if(Math.abs(this.squishVel.x) < 0.05 && Math.abs(this.squish.x) < 0.05) {this.squish.x = 0; this.stretching[0] = false;}
         if(Math.abs(this.squishVel.y) < 0.05 && Math.abs(this.squish.y) < 0.05) {this.squish.y = 0; this.stretching[1] = false;}
         
-        console.log(this.stretching[1], this.groundTimer);
 
         if(this.dead && !this.won) {
             this.reset();
