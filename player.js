@@ -563,7 +563,7 @@ class Player {
                 this.god.placeType = Platform.types[(Platform.types.indexOf(this.god.placeType)+1)%Platform.types.length];
             }
 
-            if(this.getInput(this.controls.placePlatform, true)) {
+            if(this.getInput(this.controls.erasePlatform, true)) {
                 //start build
                 let p = cam.toGlobal(mouse);
 
