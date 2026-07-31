@@ -171,47 +171,27 @@ class Platform {
 			}
 		},
 		starBackground: {
-			decorationLayer: 3,//mid decoration
+			decorationLayer: 3,//mid decorationas
 			col: "special",
 			display: function(p) {
-				var offsetThing = {
-					x: (((this.pos.x+4500) % 45) + 45) * cam.scale,
-					y: (((this.pos.y+4500) % 25) + 25) * cam.scale
-				};
 				ctx.save();
 				ctx.lineWidth = h100/5 * cam.scale;
 				ctx.fillStyle = "rgb(54, 54, 85)";
 				ctx.fillRect(p.x, p.y, this.size.x*cam.scale + 1, this.size.y*cam.scale + 1);
 				ctx.fillStyle = "rgb(223, 223, 245)";
-				var globalY = this.pos.y;
-				for(var y = p.y - offsetThing.y; y < p.y + this.size.y*cam.scale; y += 25*cam.scale) {
-					var yThing = Math.floor(globalY / 25);
-					globalY += 25;
-					for(var x = p.x - offsetThing.x; x < p.x + this.size.x*cam.scale; x += 45*cam.scale) {
-						var goofyX = yThing%2===0? x+22.5*cam.scale: x;
-						/*
-						var tl = {
-							x: limit(goofyX,	p.x, p.x + this.size.x*cam.scale),
-							y: limit(y, 		p.y, p.y + this.size.y*cam.scale)
-						};
-						var br = {
-							x: limit(goofyX+45*cam.scale, 	p.x, p.x + this.size.x*cam.scale),
-							y: limit(y+25*cam.scale, 		p.y, p.y + this.size.y*cam.scale)
-						};
-						ctx.strokeRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
-						*/
-						if(goofyX <= p.x + this.size.x * cam.scale + h100/10 && goofyX >= p.x) {
-							ctx.beginPath();
-							ctx.moveTo(goofyX, limit(y, p.y, p.y + this.size.y * cam.scale));
-							ctx.lineTo(goofyX, limit(y + 25*cam.scale, p.y, p.y + this.size.y * cam.scale));
-							ctx.stroke();
+				let parralaxOffset = Vect.sub(Vect.mult(Vect.add(this.pos,player.pos), 0.1),this.pos);
+				let parralaxOffsetIndexChange = new Vect(Math.floor(parralaxOffset.x / settings.platformSnap), Math.floor(parralaxOffset.y / settings.platformSnap));
+				for(var i = -1; i < this.size.x/settings.platformSnap; i += 1) {
+					for(var j = -1; j < this.size.y/settings.platformSnap; j += 1) {
+						for(var k = 0; k < (hash(hash((i-parralaxOffsetIndexChange.x)) + (j-parralaxOffsetIndexChange.y)) * 1.5-1)/2; k ++) {
+							let starPos = Vect.add(parralaxOffset, new Vect(this.pos.x + (i-parralaxOffsetIndexChange.x) * settings.platformSnap + hash(this.pos.y + this.pos.x + (j-parralaxOffsetIndexChange.y)) * settings.platformSnap, this.pos.y + (j-parralaxOffsetIndexChange.y) * settings.platformSnap + hash(this.pos.x + this.pos.y + (i-parralaxOffsetIndexChange.x)) * settings.platformSnap));
+							let starScreenPos = cam.toScreen(starPos);
+							if(starScreenPos.x < p.x + this.size.x * cam.scale + 2 && starScreenPos.x > p.x-2 && starScreenPos.y < p.y + this.size.y * cam.scale + 2 && starScreenPos.y > p.y-2) {
+								ctx.beginPath();
+								ctx.arc(starScreenPos.x, starScreenPos.y, (hash(hash(j-parralaxOffsetIndexChange.y) + (i-parralaxOffsetIndexChange.x)) * 1 + 0.5) * cam.scale, 0, 2*Math.PI);
+								ctx.fill();
+							}
 						}
-					}
-					if(y >= p.y) {
-						ctx.beginPath();
-						ctx.moveTo(p.x, y);
-						ctx.lineTo(p.x+this.size.x*cam.scale + 0.7, y);
-						ctx.stroke();
 					}
 				}
 				ctx.restore();
